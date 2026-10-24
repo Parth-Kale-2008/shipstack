@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Log in · Shipzo</title>
+<meta name="description" content="Log in or create a free Shipzo account to deploy your web projects with ShipStack.">
+<link rel="canonical" href="https://shipzo.tech/signup">
+<meta name="theme-color" content="#0b0d11">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff6b35'/%3E%3Cpath d='M8 20l8-12 8 12h-5v5h-6v-5z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: two panes – brand story on the left, the form on the right; stacks on phones. */
+:root{
+  --bg:#0b0d11; --bg2:#0f1217; --panel:#141820; --panel2:#1a1f29; --line:#252b37; --line2:#313847;
+  --text:#e9ecf1; --muted:#8b94a5; --dim:#5d6677; --brand:#ff6b35; --brand2:#ff8f61; --ok:#3ddc97; --warn:#f5b041; --err:#ff5d6c;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace; --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --display:"Space Grotesk","IBM Plex Sans",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 var(--sans)}
+a{color:var(--brand2)}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.page{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:100vh}
+.story{position:relative;padding:40px 56px;display:flex;flex-direction:column;border-right:1px solid var(--line);
+  background:radial-gradient(640px 380px at 0% 0%,rgba(255,107,53,.18),transparent 70%),linear-gradient(180deg,var(--bg2),var(--bg))}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);font:700 20px var(--display)}
+.logo{width:32px;height:32px;border-radius:9px;background:var(--brand);display:grid;place-items:center;color:#fff}
+.logo svg{width:20px;height:20px}
+.story-body{margin-block:auto;max-width:460px}
+.story h2{font:700 clamp(28px,3vw,38px)/1.12 var(--display);letter-spacing:-.02em;margin:0 0 16px;text-wrap:balance}
+.story h2 em{font-style:normal;color:var(--brand2)}
+.story p{color:var(--muted);margin:0 0 28px}
+.points{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.points li{display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start;font-size:14.5px;color:var(--muted)}
+.points b{display:block;color:var(--text);font-weight:600}
+.points i{width:28px;height:28px;border-radius:8px;background:rgba(61,220,151,.12);color:var(--ok);display:grid;place-items:center;font-style:normal;font-size:14px}
+.story small{color:var(--dim);font-size:12.5px}
+.formside{display:flex;align-items:center;justify-content:center;padding:40px 24px}
+.card{width:min(420px,100%)}
+.card h1{font:700 30px var(--display);letter-spacing:-.02em;margin:0 0 6px}
+.card .sub{color:var(--muted);margin:0 0 26px}
+form{display:grid;gap:16px}
+label{display:block;font-size:13px;font-weight:500;margin-bottom:6px}
+.input{width:100%;height:44px;padding:0 13px;border-radius:10px;border:1px solid var(--line2);background:var(--bg2);color:var(--text);font:inherit;transition:.15s}
+.input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(255,107,53,.15);outline:none}
+.input[aria-invalid="true"]{border-color:var(--err)}
+select.input{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;background-size:5px 5px;background-repeat:no-repeat}
+.pw{position:relative}
+.pw .input{padding-right:64px}
+.pw button{position:absolute;right:6px;top:6px;height:32px;padding:0 10px;border:0;border-radius:7px;background:var(--panel2);color:var(--muted);font:500 12px var(--sans);cursor:pointer}
+.meter{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:8px}
+.meter span{height:4px;border-radius:2px;background:var(--line2);transition:.2s}
+.rules{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12px;color:var(--dim)}
+.rules span.ok{color:var(--ok)}
+.check{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:start;font-size:13.5px;color:var(--muted)}
+.check input{width:16px;height:16px;margin:2px 0 0;accent-color:var(--brand)}
+.btn{height:46px;border:0;border-radius:10px;background:var(--brand);color:#fff;font:600 15px var(--sans);cursor:pointer;transition:.15s}
+.btn:hover{background:var(--brand2)}
+.btn:disabled{opacity:.6;cursor:wait}
+.alert{display:none;padding:11px 14px;border-radius:10px;font-size:13.5px;border:1px solid}
+.alert.show{display:block}
+.alert.err{background:rgba(255,93,108,.08);border-color:rgba(255,93,108,.35);color:#ffb3ba}
+.alert.info{background:rgba(245,176,65,.08);border-color:rgba(245,176,65,.35);color:#f8d395}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px}
+.switch{margin-top:22px;text-align:center;color:var(--muted);font-size:14px}
+.help{display:none;margin-top:10px;font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.help.show{display:block}
+.legal{margin-top:28px;text-align:center;font-size:12px;color:var(--dim)}
+.legal a{color:var(--muted)}
+.linkbtn{background:none;border:0;padding:0;color:var(--brand2);font:inherit;cursor:pointer;text-decoration:underline}
+@media (max-width:900px){
+  .page{grid-template-columns:1fr}
+  .story{border-right:0;border-bottom:1px solid var(--line);padding:24px 20px}
+  .story-body,.story small{display:none}
+  .formside{padding:32px 16px 48px;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+  <aside class="story">
+    <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+    <div class="story-body">
+      <h2>From GitHub repo to <em>live HTTPS link</em> in minutes.</h2>
+      <p>ShipStack tests, containerizes, deploys and monitors your web projects, so you can spend your time building them.</p>
+      <ul class="points">
+        <li><i>✓</i><span><b>Automated CI/CD</b>Every push is tested and deployed with zero downtime.</span></li>
+        <li><i>✓</i><span><b>Your own subdomain</b>Each project lives at <span style="font-family:var(--mono)">name.shipzo.tech</span> with HTTPS.</span></li>
+        <li><i>✓</i><span><b>Monitoring &amp; auto-healing</b>Crashed apps restart on their own.</span></li>
+      </ul>
+    </div>
+    <small>Free during the beta · No credit card</small>
+  </aside>
+
+  <main class="formside">
+    <div class="card">
+      <h1 id="title">Welcome back</h1>
+      <p class="sub" id="subtitle">Log in to manage your deployments.</p>
+      <div class="alert info" id="closed" role="status">Sign-ups are closed right now. If you already have an account, <a href="/login">log in</a>.</div>
+      <form id="form" novalidate>
+        <div class="alert err" id="error" role="alert"></div>
+        <div data-mode="signup"><label for="name">Full name</label><input class="input" id="name" name="name" autocomplete="name" maxlength="60" placeholder="Parth Kale"></div>
+        <div><label for="email">Email</label><input class="input" id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required></div>
+        <div>
+          <div class="row"><label for="password" style="margin:0">Password</label><button type="button" class="linkbtn" data-mode="login" id="forgot" style="font-size:13px">Forgot password?</button></div>
+          <div class="pw" style="margin-top:6px"><input class="input" id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required><button type="button" id="toggle" aria-label="Show password">Show</button></div>
+          <div data-mode="signup">
+            <div class="meter" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <div class="rules"><span id="r-len">8+ characters</span><span id="r-let">a letter</span><span id="r-num">a number</span></div>
+          </div>
+          <div class="help" id="help">Password resets are handled by our team during the beta. Message us from the email on your account via <a href="https://github.com/Parth-Kale-2008" target="_blank" rel="noopener">github.com/Parth-Kale-2008</a> and we'll send you a temporary password.</div>
+        </div>
+        <div data-mode="signup"><label for="useCase">What will you deploy? <span style="color:var(--dim);font-weight:400">(optional)</span></label>
+          <select class="input" id="useCase"><option value="">Choose one</option><option value="student">College or school project</option><option value="developer">Personal / portfolio project</option><option value="startup">Startup product</option><option value="agency">Client work (agency / freelance)</option><option value="other">Something else</option></select></div>
+        <label class="check" data-mode="signup"><input type="checkbox" id="terms"><span>I agree to the <a href="/legal" target="_blank">Terms and Privacy Policy</a>.</span></label>
+        <button class="btn" id="submit" type="submit">Log in</button>
+      </form>
+      <p class="switch" id="switch"></p>
+      <p class="legal">Protected by encrypted sessions · <a href="/legal">Terms &amp; Privacy</a></p>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  const signup = location.pathname.replace(/\/$/, '') === '/signup';
+  const $ = (id) => document.getElementById(id);
+  document.querySelectorAll('[data-mode]').forEach((el) => { el.hidden = el.dataset.mode !== (signup ? 'signup' : 'login'); });
+  document.title = signup ? 'Create your account · Shipzo' : 'Log in · Shipzo';
+  $('title').textContent = signup ? 'Create your account' : 'Welcome back';
+  $('subtitle').textContent = signup ? 'Deploy your first project in under two minutes. No DevOps experience needed.' : 'Log in to manage your deployments.';
+  $('submit').textContent = signup ? 'Create account' : 'Log in';
+  $('switch').innerHTML = signup ? 'Already have an account? <a href="/login">Log in</a>' : 'New to Shipzo? <a href="/signup">Create a free account</a>';
+  $('password').autocomplete = signup ? 'new-password' : 'current-password';
+  try { const e = sessionStorage.getItem('ss-email'); if (e) $('email').value = e; } catch (_) {}
+
+  if (signup) fetch('/api/auth/status').then((r) => r.json()).then((s) => { if (!s.signupOpen) { $('closed').classList.add('show'); $('form').hidden = true; } }).catch(() => {});
+
+  $('toggle').onclick = () => { const p = $('password'); const show = p.type === 'password'; p.type = show ? 'text' : 'password'; $('toggle').textContent = show ? 'Hide' : 'Show'; $('toggle').setAttribute('aria-label', show ? 'Hide password' : 'Show password'); };
+  $('forgot').onclick = () => $('help').classList.toggle('show');
+
+  const colors = ['var(--err)', 'var(--warn)', 'var(--warn)', 'var(--ok)'];
+  $('password').addEventListener('input', () => {
+    if (!signup) return;
+    const v = $('password').value;
+    const checks = { 'r-len': v.length >= 8, 'r-let': /[A-Za-z]/.test(v), 'r-num': /\d/.test(v) };
+    Object.entries(checks).forEach(([k, ok]) => $(k).classList.toggle('ok', ok));
+    let score = Object.values(checks).filter(Boolean).length + (v.length >= 12 && /[^A-Za-z0-9]/.test(v) ? 1 : 0);
+    if (!v) score = 0;
+    document.querySelectorAll('.meter span').forEach((s, i) => { s.style.background = i < score ? colors[Math.max(0, score - 1)] : ''; });
+  });
+
+  const showError = (msg, field) => {
+    const e = $('error'); e.textContent = msg; e.classList.add('show');
+    document.querySelectorAll('.input').forEach((i) => i.removeAttribute('aria-invalid'));
+    if (field) { $(field).setAttribute('aria-invalid', 'true'); $(field).focus(); }
+  };
+
+  $('form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    $('error').classList.remove('show');
+    const body = { email: $('email').value.trim(), password: $('password').value };
+    if (signup) {
+      body.name = $('name').value.trim(); body.useCase = $('useCase').value || undefined; body.acceptTerms = $('terms').checked;
+      if (body.name.length < 2) return showError('Enter your full name', 'name');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) return showError('Enter a valid email address', 'email');
+    if (!body.password) return showError('Enter your password', 'password');
+    if (signup && !body.acceptTerms) return showError('Please accept the Terms and Privacy Policy to continue');
+    const btn = $('submit'); btn.disabled = true; btn.textContent = signup ? 'Creating account…' : 'Logging in…';
+    try {
+      const r = await fetch(`/api/auth/${signup ? 'signup' : 'login'}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'ShipStack' }, body: JSON.stringify(body) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || 'Something went wrong. Try again.');
+      try { sessionStorage.removeItem('ss-email'); } catch (_) {}
+      location.href = data.mustChangePassword ? '/app#/account' : '/app';
+    } catch (e) {
+      showError(e.message);
+      btn.disabled = false; btn.textContent = signup ? 'Create account' : 'Log in';
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -76,6 +76,13 @@ flowchart LR
 | `public/` | The dashboard (single-page app) |
 | `samples/` | The four one-click templates |
 
+## Accounts and admin
+
+- **Pages:** `/` landing, `/signup` and `/login`, `/app` dashboard (with an **Account** page for profile, password and account deletion), `/admin` back-office, `/legal` terms and privacy.
+- **Stored for each user:** name, email, scrypt password hash, role, status, project limit, use case, terms acceptance time, sign-up IP and browser, last login and IP, login count, last seen, and the last 20 logins.
+- **Admin panel (`/admin`):** overview metrics and server health; users (search, details, login history, suspend or reactivate, project limit, reset password, sign out everywhere, delete); all projects (stop, start, redeploy, delete); recent deployments; audit log; settings (open or close sign-ups, default project limit).
+- **Who is admin:** set `ADMIN_EMAILS=you@example.com` (comma-separated) in `/etc/shipstack.env`, then `sudo systemctl restart shipstack`. For everyone else, `/admin` and `/api/admin/*` return 404.
+
 ## Security
 
 - Passwords hashed with scrypt; sessions are random 256-bit tokens (only the SHA-256 is stored), HttpOnly SameSite cookies

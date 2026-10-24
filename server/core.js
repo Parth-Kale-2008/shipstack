@@ -82,9 +82,9 @@ function httpErr(msg, status = 400) { const e = new Error(msg); e.status = statu
 const dockerRequired = () => APP_DOMAIN && runtime.mode() === 'native' && process.env.SHIPSTACK_RUNTIME !== 'native';
 const PAUSED = 'Docker is not running on this server, so deployments are paused. Ask the administrator to start Docker.';
 
-async function createProject(user, body) {
+async function createProject(user, body, limit) {
   if (dockerRequired()) throw httpErr(PAUSED, 503);
-  const max = +process.env.MAX_PROJECTS_PER_USER || 10;
+  const max = limit || +process.env.MAX_PROJECTS_PER_USER || 10;
   if (projects().filter((p) => p.ownerId === user.id).length >= max) throw httpErr(`Your account can have up to ${max} projects. Delete one to add another.`, 403);
   const s = body.source || {};
   let source, name;

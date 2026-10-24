@@ -33,7 +33,7 @@ async function api(path, opts = {}) {
   });
   const type = res.headers.get('content-type') || '';
   const data = type.includes('json') ? await res.json() : await res.text();
-  if (res.status === 401 && !path.startsWith('/api/auth/')) { ME = null; if (!/^#\/(login|signup)/.test(location.hash)) location.hash = '#/login'; }
+  if (res.status === 401 && !path.startsWith('/api/auth/')) { ME = null; location.href = '/login'; }
   if (!res.ok) throw new Error((data && data.error) || res.statusText);
   return data;
 }
@@ -103,9 +103,9 @@ async function loadSystem() {
     $('#sys').innerHTML = `
       <span class="pill" title="Where apps run"><span class="dot ${SYS.mode === 'docker' ? 'ok' : 'warn'}"></span>${SYS.mode === 'docker' ? `Docker ${esc(SYS.dockerVersion)}` : 'Native runtime'}</span>
       <span class="pill" title="Public URL provider"><span class="dot ${tun ? 'ok' : ''}"></span>${tun ? `Public URLs · ${tun}` : 'Public URLs off'}</span>
-      ${ME ? `<span class="user"><span class="avatar">${esc(ME.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase())}</span><span title="${esc(ME.email)}">${esc(ME.name.split(' ')[0])}</span></span><button class="btn sm ghost logout" id="logout">Log out</button>` : ''}`;
+      ${ME ? `<span class="user"><span class="avatar">${esc(ME.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase())}</span><span title="${esc(ME.email)}">${esc(ME.name.split(' ')[0])}</span></span>${ME.role === 'admin' ? '<a class="btn sm ghost logout" href="/admin">Admin</a>' : ''}<a class="btn sm ghost logout" href="#/account">Account</a><button class="btn sm ghost logout" id="logout">Log out</button>` : ''}`;
     const lo = $('#logout');
-    if (lo) lo.onclick = async () => { await api('/api/auth/logout', { method: 'POST' }).catch(() => {}); ME = null; SYS = null; $('#sys').innerHTML = ''; location.hash = '#/login'; };
+    if (lo) lo.onclick = async () => { await api('/api/auth/logout', { method: 'POST' }).catch(() => {}); ME = null; SYS = null; location.href = '/'; };
   } catch { /* offline */ }
 }
 
@@ -118,11 +118,12 @@ function route() {
   cleanup = [];
   const h = location.hash.replace(/^#/, '') || '/';
   const parts = h.split('/').filter(Boolean);
-  if (parts[0] === 'login' || parts[0] === 'signup') { $('.topbar nav').style.visibility = 'hidden'; return renderAuth(parts[0]); }
-  if (!ME) { location.hash = '#/login'; return; }
+  if (parts[0] === 'login' || parts[0] === 'signup') { location.href = '/' + parts[0]; return; }
+  if (!ME) { location.href = '/login'; return; }
   $('.topbar nav').style.visibility = '';
   $$('.topbar nav a').forEach((a) => a.classList.toggle('active', (a.dataset.nav === 'new' && parts[0] === 'new') || (a.dataset.nav === 'dash' && !parts[0])));
   window.scrollTo(0, 0);
+  if (parts[0] === 'account') return renderAccount();
   if (parts[0] === 'new') return renderNew(new URLSearchParams(h.split('?')[1] || ''));
   if (parts[0] === 'p' && parts[1]) return renderProject(parts[1], (parts[2] || 'overview').split('?')[0]);
   return renderDashboard();
@@ -782,33 +783,52 @@ function tabSettings(P) {
   return {};
 }
 
-/* ============================== AUTH ============================== */
+/* ============================== ACCOUNT ============================== */
 let ME = null;
-function renderAuth(mode) {
-  const signup = mode === 'signup';
-  view.innerHTML = `<div class="auth"><div class="auth-card">
-    <h1>${signup ? 'Create your account' : 'Welcome back'}</h1>
-    <p class="muted" style="margin:0">${signup ? 'Deploy your first project in under two minutes. No DevOps experience needed.' : 'Log in to manage your deployments.'}</p>
-    <form id="authForm" autocomplete="on">
-      ${signup ? '<div><label class="f" for="aName">Name</label><input class="input" id="aName" autocomplete="name" required></div>' : ''}
-      <div><label class="f" for="aEmail">Email</label><input class="input" id="aEmail" type="email" autocomplete="email" required></div>
-      <div><label class="f" for="aPw">Password</label><input class="input" id="aPw" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="${signup ? 8 : 1}" required>${signup ? '<div class="hint">At least 8 characters.</div>' : ''}</div>
-      <button class="btn primary lg" type="submit">${signup ? 'Create account' : 'Log in'}</button>
-    </form>
-    <div class="auth-switch">${signup ? 'Already have an account? <a href="#/login">Log in</a>' : 'New to ShipStack? <a href="#/signup">Create an account</a>'}</div>
-    <div class="feat"><div><b>CI/CD</b>tests on every deploy</div><div><b>Containers</b>Docker builds</div><div><b>Monitoring</b>auto-healing</div></div>
-  </div></div>`;
-  $('#authForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = e.submitter; btn.disabled = true;
-    try {
-      const body = { email: $('#aEmail').value, password: $('#aPw').value };
-      if (signup) body.name = $('#aName').value;
-      const r = await api(`/api/auth/${signup ? 'signup' : 'login'}`, { method: 'POST', body });
-      ME = r.user;
-      await loadSystem();
-      location.hash = '#/';
-    } catch (err) { toast(err.message, 'err'); btn.disabled = false; }
+let MUST_CHANGE = false;
+const USE_CASES = { '': 'Not set', student: 'College or school project', developer: 'Personal / portfolio project', startup: 'Startup product', agency: 'Client work (agency / freelance)', other: 'Something else' };
+async function renderAccount() {
+  let A;
+  try { A = await api('/api/account'); } catch (e) { view.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  const u = A.user;
+  view.innerHTML = `<div class="form-wrap">
+    <h1>Account</h1>
+    <p class="muted" style="margin:6px 0 0">Your profile, password and account settings.</p>
+    ${A.mustChangePassword ? '<div class="banner warn" style="margin-top:18px">You signed in with a temporary password. Choose a new password below to secure your account.</div>' : ''}
+    <div class="step"><div class="panel"><div class="panel-h"><h3>Profile</h3></div><div class="panel-b">
+      <div class="grid2">
+        <div><label class="f" for="acName">Full name</label><input class="input" id="acName" maxlength="60" value="${esc(u.name)}"></div>
+        <div><label class="f" for="acEmail">Email</label><input class="input" id="acEmail" value="${esc(u.email)}" disabled><div class="hint">Contact support to change your email.</div></div>
+        <div><label class="f" for="acUse">What do you deploy?</label><select class="input" id="acUse">${Object.entries(USE_CASES).map(([k, v]) => `<option value="${k}" ${(u.useCase || '') === k ? 'selected' : ''}>${v}</option>`).join('')}</select></div>
+        <div><label class="f">Plan &amp; usage</label><div style="padding-top:9px">${A.usage.projects} of ${u.role === 'admin' ? 'unlimited' : A.usage.maxProjects} projects used · member since ${new Date(u.createdAt).toLocaleDateString()}</div></div>
+      </div>
+      <div style="margin-top:16px"><button class="btn primary" id="acSave">Save profile</button></div>
+    </div></div></div>
+    <div class="step"><div class="panel"><div class="panel-h"><h3>Change password</h3></div><div class="panel-b">
+      <div class="grid2">
+        <div><label class="f" for="acCur">Current password</label><input class="input" id="acCur" type="password" autocomplete="current-password"></div>
+        <div><label class="f" for="acNew">New password</label><input class="input" id="acNew" type="password" autocomplete="new-password"><div class="hint">At least 8 characters, with a letter and a number. Other devices will be signed out.</div></div>
+      </div>
+      <div style="margin-top:16px"><button class="btn" id="acPw">Update password</button></div>
+    </div></div></div>
+    <div class="step"><div class="panel"><div class="panel-h"><h3>Recent sign-ins</h3></div><div class="panel-b" style="padding:0">
+      <table class="t"><thead><tr><th>When</th><th>IP address</th><th>Device</th></tr></thead><tbody>${A.logins.map((l) => `<tr><td>${new Date(l.at).toLocaleString()}</td><td class="mono">${esc(l.ip)}</td><td class="muted" style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.ua)}">${esc(l.ua || '')}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">No sign-ins recorded.</td></tr>'}</tbody></table>
+    </div></div></div>
+    ${u.role === 'admin' ? '' : `<div class="panel section" style="border-color:rgba(255,93,108,.3)"><div class="panel-h"><h3 style="color:var(--err)">Delete account</h3></div><div class="panel-b">
+      <p class="muted" style="margin:0 0 12px">Permanently deletes your account and all your projects, apps and logs. This can't be undone.</p>
+      <div class="row"><input class="input" id="acDelPw" type="password" placeholder="Enter your password to confirm" style="max-width:320px" autocomplete="current-password"><button class="btn danger" id="acDel">Delete my account</button></div>
+    </div></div>`}
+  </div>`;
+  $('#acSave').onclick = async () => {
+    try { const r = await api('/api/account', { method: 'PATCH', body: { name: $('#acName').value, useCase: $('#acUse').value } }); ME = r.user; await loadSystem(); toast('Profile saved', 'ok'); } catch (e) { toast(e.message, 'err'); }
+  };
+  $('#acPw').onclick = async () => {
+    try { await api('/api/auth/password', { method: 'POST', body: { current: $('#acCur').value, password: $('#acNew').value } }); MUST_CHANGE = false; toast('Password updated. Other devices were signed out.', 'ok'); renderAccount(); } catch (e) { toast(e.message, 'err'); }
+  };
+  const del = $('#acDel');
+  if (del) del.onclick = async () => {
+    if (!confirm('Delete your Shipzo account and all your projects permanently?')) return;
+    try { await api('/api/account', { method: 'DELETE', body: { password: $('#acDelPw').value } }); location.href = '/'; } catch (e) { toast(e.message, 'err'); }
   };
 }
 
@@ -821,9 +841,10 @@ document.addEventListener('click', (e) => {
 });
 
 (async function boot() {
-  try { ME = (await api('/api/auth/me')).user; } catch { ME = null; }
-  if (ME) await loadSystem();
-  else if (!/^#\/(login|signup)/.test(location.hash)) location.hash = '#/login';
+  try { const me = await api('/api/auth/me'); ME = me.user; MUST_CHANGE = !!me.mustChangePassword; } catch { ME = null; }
+  if (!ME) { location.href = '/login'; return; }
+  await loadSystem();
+  if (MUST_CHANGE) location.hash = '#/account';
   connectEvents();
   route();
 })();

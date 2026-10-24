@@ -4,11 +4,12 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { ROOT, DATA, iso, id, lanIp, mkdirp } = require('./util');
+const { ROOT, DATA, lanIp, mkdirp } = require('./util');
 const { db, save } = require('./db');
 const runtime = require('./runtime');
 const proxy = require('./proxy');
 const core = require('./core');
+const accounts = require('./accounts');
 
 const PORT = core.PORT;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -21,38 +22,15 @@ const SECURE = /^https:/.test(process.env.SHIPSTACK_PUBLIC_URL || '') ? '; Secur
 const clientIp = (req) => (process.env.TRUST_PROXY === '1' && req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : req.socket.remoteAddress);
 
 /* ---------------- auth ---------------- */
-const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
-function hashPassword(pw) {
-  const salt = crypto.randomBytes(16);
-  return `${salt.toString('hex')}:${crypto.scryptSync(pw, salt, 64).toString('hex')}`;
-}
-function checkPassword(pw, stored) {
-  const [salt, hash] = String(stored).split(':');
-  if (!salt || !hash) return false;
-  const a = crypto.scryptSync(pw, Buffer.from(salt, 'hex'), 64);
-  const b = Buffer.from(hash, 'hex');
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
 function cookies(req) {
   const out = {};
   String(req.headers.cookie || '').split(';').forEach((c) => { const i = c.indexOf('='); if (i > 0) out[c.slice(0, i).trim()] = decodeURIComponent(c.slice(i + 1).trim()); });
   return out;
 }
-function currentUser(req) {
-  const t = cookies(req).ss_session;
-  if (!t) return null;
-  const s = db().sessions.find((x) => x.hash === sha(t));
-  if (!s || s.expires < Date.now()) return null;
-  return db().users.find((u) => u.id === s.userId) || null;
-}
-function startSession(res, user) {
-  const t = crypto.randomBytes(32).toString('base64url');
-  db().sessions = db().sessions.filter((s) => s.expires > Date.now());
-  db().sessions.push({ hash: sha(t), userId: user.id, expires: Date.now() + 30 * 864e5 });
-  save();
-  res.setHeader('Set-Cookie', `ss_session=${t}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${30 * 86400}${SECURE}`);
-}
-const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, createdAt: u.createdAt });
+const sessionToken = (req) => cookies(req).ss_session;
+const currentUser = (req) => accounts.sessionUser(sessionToken(req));
+const setSession = (res, token) => res.setHeader('Set-Cookie', `ss_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${30 * 86400}${SECURE}`);
+const clearSession = (res) => res.setHeader('Set-Cookie', `ss_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${SECURE}`);
 const attempts = new Map(); // ip -> { n, until }
 function throttled(ip) { const a = attempts.get(ip); return a && a.n >= 10 && a.until > Date.now(); }
 function failed(ip) { const a = attempts.get(ip) || { n: 0, until: 0 }; if (a.until < Date.now()) a.n = 0; a.n++; a.until = Date.now() + 15 * 60000; attempts.set(ip, a); }
@@ -115,46 +93,68 @@ async function api(req, res, url) {
   // CSRF guard: state-changing requests must carry our custom header (cannot be sent cross-site without CORS).
   if (method !== 'GET' && req.headers['x-requested-with'] !== 'ShipStack') return send(res, 403, { error: 'Missing X-Requested-With header' });
 
+  const ua = req.headers['user-agent'];
   if (p === '/api/auth/signup' && method === 'POST') {
-    if (process.env.ALLOW_SIGNUP === 'false') return send(res, 403, { error: 'Sign-ups are closed on this server' });
-    const b = await readJson(req);
-    const email = String(b.email || '').trim().toLowerCase();
-    const name = String(b.name || '').trim().slice(0, 60);
-    const pw = String(b.password || '');
-    if (!name) return send(res, 400, { error: 'Enter your name' });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, 400, { error: 'Enter a valid email address' });
-    if (pw.length < 8) return send(res, 400, { error: 'Password must be at least 8 characters' });
-    if (db().users.some((u) => u.email === email)) return send(res, 409, { error: 'An account with this email already exists. Log in instead.' });
-    const user = { id: id(4), name, email, password: hashPassword(pw), createdAt: iso() };
-    db().users.push(user); save();
-    startSession(res, user);
-    return send(res, 201, { user: publicUser(user) });
+    const user = accounts.signup(await readJson(req), ip, ua);
+    setSession(res, accounts.newSession(user, ip, ua));
+    return send(res, 201, { user: accounts.publicUser(user) });
   }
   if (p === '/api/auth/login' && method === 'POST') {
     if (throttled(ip)) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' });
     const b = await readJson(req);
     const user = db().users.find((u) => u.email === String(b.email || '').trim().toLowerCase());
-    if (!user || !checkPassword(String(b.password || ''), user.password)) { failed(ip); return send(res, 401, { error: 'Email or password is incorrect' }); }
+    if (!user || !accounts.checkPassword(String(b.password || ''), user.password)) { failed(ip); return send(res, 401, { error: 'Email or password is incorrect' }); }
+    if (user.status === 'suspended') return send(res, 403, { error: 'This account has been suspended. Contact support if you think this is a mistake.' });
     attempts.delete(ip);
-    startSession(res, user);
-    return send(res, 200, { user: publicUser(user) });
+    accounts.recordLogin(user, ip, ua);
+    setSession(res, accounts.newSession(user, ip, ua));
+    return send(res, 200, { user: accounts.publicUser(user), mustChangePassword: !!user.mustChangePassword });
   }
   if (p === '/api/auth/logout' && method === 'POST') {
-    const t = cookies(req).ss_session;
-    if (t) { db().sessions = db().sessions.filter((s) => s.hash !== sha(t)); save(); }
-    res.setHeader('Set-Cookie', `ss_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${SECURE}`);
+    accounts.endSession(sessionToken(req));
+    clearSession(res);
     return send(res, 200, { ok: true });
   }
+  if (p === '/api/auth/status' && method === 'GET') return send(res, 200, { signupOpen: accounts.settings().signupOpen });
 
   const user = currentUser(req);
   if (!user) return send(res, 401, { error: 'Please log in' });
-  if (p === '/api/auth/me') return send(res, 200, { user: publicUser(user) });
+  if (p === '/api/auth/me') return send(res, 200, { user: accounts.publicUser(user), mustChangePassword: !!user.mustChangePassword });
+
+  /* ----- the signed-in user's own account ----- */
+  if (p === '/api/account' && method === 'GET') {
+    return send(res, 200, { user: accounts.publicUser(user), usage: { projects: accounts.projectsOf(user).length, maxProjects: accounts.maxProjectsFor(user) }, logins: (user.logins || []).slice(0, 8), mustChangePassword: !!user.mustChangePassword });
+  }
+  if (p === '/api/account' && method === 'PATCH') {
+    const b = await readJson(req);
+    if (b.name !== undefined) { const n = String(b.name).trim().replace(/\s+/g, ' ').slice(0, 60); if (n.length < 2) throw core.httpErr('Enter your full name'); user.name = n; }
+    if (b.useCase !== undefined) user.useCase = accounts.USE_CASES.includes(b.useCase) ? b.useCase : null;
+    save();
+    return send(res, 200, { user: accounts.publicUser(user) });
+  }
+  if (p === '/api/account' && method === 'DELETE') {
+    const b = await readJson(req);
+    if (!accounts.checkPassword(String(b.password || ''), user.password)) throw core.httpErr('Password is incorrect');
+    if (accounts.isAdmin(user)) throw core.httpErr('Admin accounts cannot be deleted from the app');
+    await accounts.deleteUser(user);
+    clearSession(res);
+    return send(res, 200, { ok: true });
+  }
   if (p === '/api/auth/password' && method === 'POST') {
     const b = await readJson(req);
-    if (!checkPassword(String(b.current || ''), user.password)) return send(res, 400, { error: 'Current password is incorrect' });
-    if (String(b.password || '').length < 8) return send(res, 400, { error: 'New password must be at least 8 characters' });
-    user.password = hashPassword(String(b.password)); save();
+    if (!accounts.checkPassword(String(b.current || ''), user.password)) throw core.httpErr('Current password is incorrect');
+    const problem = accounts.passwordProblem(b.password, user.email);
+    if (problem) throw core.httpErr(problem);
+    user.password = accounts.hashPassword(String(b.password));
+    delete user.mustChangePassword;
+    accounts.revokeSessions(user.id, sessionToken(req)); // sign out every other device
     return send(res, 200, { ok: true });
+  }
+
+  /* ----- admin back-office (404 for everyone else, so it is not discoverable) ----- */
+  if (p.startsWith('/api/admin/')) {
+    if (!accounts.isAdmin(user)) return send(res, 404, { error: 'Not found' });
+    return adminApi(req, res, url, user);
   }
 
   if (p === '/api/system') {
@@ -163,7 +163,7 @@ async function api(req, res, url) {
     const deps = db().deployments.filter((d) => ids.has(d.projectId));
     return send(res, 200, {
       version: VERSION, mode: runtime.mode(), dockerVersion: runtime.info.dockerVersion, platform: process.platform, git: runtime.info.git,
-      tunnels: core.APP_DOMAIN ? { cloudflared: false, ssh: false } : { ...core.tunnel.avail }, domain: core.APP_DOMAIN || null, port: PORT, lan: core.APP_DOMAIN ? null : LAN, plans: core.PLANS, user: publicUser(user),
+      tunnels: core.APP_DOMAIN ? { cloudflared: false, ssh: false } : { ...core.tunnel.avail }, domain: core.APP_DOMAIN || null, port: PORT, lan: core.APP_DOMAIN ? null : LAN, plans: core.PLANS, user: accounts.publicUser(user),
       stats: { projects: mine.length, live: mine.filter((x) => x.status === 'live').length, deployments: deps.length, successful: deps.filter((d) => d.status === 'success').length, failed: deps.filter((d) => d.status === 'failed').length },
     });
   }
@@ -173,7 +173,7 @@ async function api(req, res, url) {
     return send(res, 200, core.projects().filter((x) => x.ownerId === user.id).map((x) => core.view(x, false, baseUrl(req), LAN)).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')));
   }
   if (p === '/api/projects' && method === 'POST') {
-    const { p: proj, d } = await core.createProject(user, await readJson(req));
+    const { p: proj, d } = await core.createProject(user, await readJson(req), accounts.maxProjectsFor(user));
     return send(res, 201, { project: core.view(proj, false, baseUrl(req), LAN), deployment: core.brief(d) });
   }
 
@@ -241,14 +241,109 @@ async function api(req, res, url) {
   throw core.httpErr('Not found', 404);
 }
 
+/* ---------------- admin API ---------------- */
+async function adminApi(req, res, url, admin) {
+  const p = url.pathname.replace('/api/admin', '');
+  const method = req.method;
+  let m;
+  const findUser = (uid) => { const u = db().users.find((x) => x.id === uid); if (!u) throw core.httpErr('User not found', 404); return u; };
+  const findProject = (pid) => { const pr = core.getProject(pid); if (!pr) throw core.httpErr('Project not found', 404); return pr; };
+
+  if (p === '/overview') return send(res, 200, await accounts.overview());
+  if (p === '/users' && method === 'GET') return send(res, 200, db().users.map(accounts.adminUser).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+  if ((m = /^\/users\/(\w+)$/.exec(p)) && method === 'GET') {
+    const u = findUser(m[1]);
+    return send(res, 200, { ...accounts.adminUser(u), signupUa: u.signupUa || null, logins: u.logins || [], projectList: accounts.projectsOf(u).map(accounts.adminProject) });
+  }
+  if ((m = /^\/users\/(\w+)$/.exec(p)) && method === 'PATCH') {
+    const u = findUser(m[1]);
+    const b = await readJson(req);
+    const changes = [];
+    if (b.status !== undefined) {
+      if (!['active', 'suspended'].includes(b.status)) throw core.httpErr('Unknown status');
+      if (accounts.isAdmin(u)) throw core.httpErr('Admins cannot be suspended');
+      u.status = b.status; changes.push(`status=${b.status}`);
+      if (b.status === 'suspended') {
+        accounts.revokeSessions(u.id);
+        for (const pr of accounts.projectsOf(u)) if (pr.status === 'live') await core.stopProject(pr);
+      }
+    }
+    if (b.maxProjects !== undefined) {
+      if (b.maxProjects === null || b.maxProjects === '') { delete u.maxProjects; changes.push('limit=default'); }
+      else { const n = Math.round(+b.maxProjects); if (!(n >= 0 && n <= 100)) throw core.httpErr('Project limit must be between 0 and 100'); u.maxProjects = n; changes.push(`limit=${n}`); }
+    }
+    if (b.name !== undefined) { const n = String(b.name).trim().slice(0, 60); if (n.length >= 2) { u.name = n; changes.push('name'); } }
+    save();
+    accounts.audit(admin, 'user.update', u.email, changes.join(', '));
+    return send(res, 200, accounts.adminUser(u));
+  }
+  if ((m = /^\/users\/(\w+)\/reset-password$/.exec(p)) && method === 'POST') {
+    const u = findUser(m[1]);
+    const temp = accounts.temporaryPassword();
+    u.password = accounts.hashPassword(temp);
+    u.mustChangePassword = true;
+    accounts.revokeSessions(u.id);
+    save();
+    accounts.audit(admin, 'user.reset_password', u.email);
+    return send(res, 200, { temporaryPassword: temp });
+  }
+  if ((m = /^\/users\/(\w+)\/logout$/.exec(p)) && method === 'POST') {
+    const u = findUser(m[1]);
+    accounts.revokeSessions(u.id);
+    accounts.audit(admin, 'user.sign_out_everywhere', u.email);
+    return send(res, 200, { ok: true });
+  }
+  if ((m = /^\/users\/(\w+)$/.exec(p)) && method === 'DELETE') {
+    const u = findUser(m[1]);
+    if (accounts.isAdmin(u)) throw core.httpErr('Admins cannot be deleted');
+    const n = accounts.projectsOf(u).length;
+    await accounts.deleteUser(u);
+    accounts.audit(admin, 'user.delete', u.email, `${n} project(s) removed`);
+    return send(res, 200, { ok: true });
+  }
+  if (p === '/projects' && method === 'GET') return send(res, 200, core.projects().map(accounts.adminProject).sort((a, b) => (b.lastDeployedAt || b.createdAt).localeCompare(a.lastDeployedAt || a.createdAt)));
+  if ((m = /^\/projects\/(\w+)\/(stop|start|redeploy)$/.exec(p)) && method === 'POST') {
+    const pr = findProject(m[1]);
+    if (m[2] === 'stop') await core.stopProject(pr);
+    else if (m[2] === 'start') await core.startProject(pr, 'admin');
+    else core.createDeployment(pr, { trigger: 'admin' });
+    accounts.audit(admin, `project.${m[2]}`, pr.slug);
+    return send(res, 200, accounts.adminProject(pr));
+  }
+  if ((m = /^\/projects\/(\w+)$/.exec(p)) && method === 'DELETE') {
+    const pr = findProject(m[1]);
+    await core.deleteProject(pr);
+    accounts.audit(admin, 'project.delete', pr.slug);
+    return send(res, 200, { ok: true });
+  }
+  if (p === '/deployments' && method === 'GET') {
+    const deps = db().deployments.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 60);
+    return send(res, 200, deps.map((d) => { const pr = core.getProject(d.projectId) || {}; return { id: d.id, number: d.number, project: pr.slug || '(deleted)', status: d.status, trigger: d.trigger, stack: d.stack ? d.stack.framework : null, durationMs: d.durationMs || null, createdAt: d.createdAt, error: d.error || null }; }));
+  }
+  if (p === '/audit' && method === 'GET') return send(res, 200, (db().audit || []).slice(0, 200));
+  if (p === '/settings' && method === 'PATCH') {
+    const b = await readJson(req);
+    const st = accounts.settings();
+    if (b.signupOpen !== undefined) st.signupOpen = !!b.signupOpen;
+    if (b.defaultMaxProjects !== undefined) { const n = Math.round(+b.defaultMaxProjects); if (!(n >= 1 && n <= 50)) throw core.httpErr('Default limit must be between 1 and 50'); st.defaultMaxProjects = n; }
+    save();
+    accounts.audit(admin, 'settings.update', 'platform', JSON.stringify(b));
+    return send(res, 200, st);
+  }
+  throw core.httpErr('Not found', 404);
+}
+
 /* ---------------- server ---------------- */
 // Public site: "/" is the landing page (logged-in users go straight to the dashboard), "/app" is the dashboard.
-const PAGES = { '/': 'landing.html', '/app': 'index.html', '/app/': 'index.html', '/legal': 'legal.html' };
+const PAGES = { '/': 'landing.html', '/app': 'index.html', '/app/': 'index.html', '/legal': 'legal.html', '/login': 'auth.html', '/signup': 'auth.html', '/admin': 'admin.html' };
 function serveStatic(req, res, url) {
-  if (url.pathname === '/' && currentUser(req)) { res.writeHead(302, { Location: '/app' }); return res.end(); }
+  const gated = ['/', '/login', '/signup', '/admin'].includes(url.pathname);
+  const me = gated ? currentUser(req) : null;
+  if (me && url.pathname !== '/admin') { res.writeHead(302, { Location: '/app' }); return res.end(); }
+  if (url.pathname === '/admin' && !accounts.isAdmin(me)) { const pg = proxy.page('Page not found', 'Go back to <a href="/" style="color:#ff8f61">shipzo.tech</a>.', 404); res.writeHead(404, { 'Content-Type': MIME['.html'] }); return res.end(pg.html); }
   const page = PAGES[url.pathname];
   let file = path.normalize(path.join(PUB, page || decodeURIComponent(url.pathname)));
-  if (!file.startsWith(PUB + path.sep)) return send(res, 403, 'Forbidden');
+  if (!file.startsWith(PUB + path.sep) || (!page && /^(admin|auth|landing|legal)\.html$/.test(path.basename(file)))) return send(res, 404, 'Not found');
   fs.readFile(file, (err, buf) => {
     if (err) {
       const pg = proxy.page('Page not found', 'Go back to <a href="/" style="color:#ff8f61">shipzo.tech</a>.', 404);
