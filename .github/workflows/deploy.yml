@@ -1,0 +1,51 @@
+# Continuous deployment of ShipStack itself: every push to main is checked, then shipped to shipzo.tech.
+# The SSH key in SHIPSTACK_DEPLOY_KEY is restricted on the server: it can only run /usr/local/bin/shipstack-deploy.
+name: Deploy to shipzo.tech
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax check server and dashboard
+        run: for f in server/*.js public/app.js; do node --check "$f"; done
+      - name: Start-up smoke test
+        run: |
+          SHIPSTACK_DATA=$RUNNER_TEMP/data PORT=8080 node server/index.js &
+          for i in $(seq 1 20); do curl -fsS -o /dev/null http://127.0.0.1:8080/robots.txt && break; sleep 1; done
+          curl -fsS -o /dev/null http://127.0.0.1:8080/
+          curl -fsS -o /dev/null http://127.0.0.1:8080/app
+          curl -fsS http://127.0.0.1:8080/api/samples | grep -q static-portfolio
+
+  deploy:
+    name: Deploy
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SHIPSTACK_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.SHIPSTACK_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Ship code to the server
+        run: tar --exclude=.git -czf - . | ssh -i ~/.ssh/deploy_key deployer@${{ secrets.SHIPSTACK_HOST }}
+      - name: Check shipzo.tech is up
+        run: |
+          sleep 3
+          curl -fsS -o /dev/null -w "shipzo.tech -> %{http_code}\n" https://shipzo.tech/
+          curl -fsS -o /dev/null -w "dashboard   -> %{http_code}\n" https://shipzo.tech/app

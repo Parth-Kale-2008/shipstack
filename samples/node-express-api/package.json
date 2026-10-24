@@ -1,0 +1,17 @@
+{
+  "name": "shipstack-tasks-api",
+  "version": "1.0.0",
+  "description": "Tiny Express Tasks API sample for ShipStack",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
