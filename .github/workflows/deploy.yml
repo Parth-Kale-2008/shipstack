@@ -28,7 +28,7 @@ jobs:
           for i in $(seq 1 20); do curl -fsS -o /dev/null http://127.0.0.1:8080/robots.txt && break; sleep 1; done
           curl -fsS -o /dev/null http://127.0.0.1:8080/
           curl -fsS -o /dev/null http://127.0.0.1:8080/app
-          curl -fsS http://127.0.0.1:8080/api/samples | grep -q static-portfolio
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/api/projects)" = 401   # API refuses anonymous users
 
   deploy:
     name: Deploy
