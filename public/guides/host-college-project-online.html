@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Host Your College Project Online for Free (Live Link for Your Viva)</title>
+<meta name="description" content="Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to GitHub without commands and deploy with HTTPS.">
+<link rel="canonical" href="https://shipzo.tech/guides/host-college-project-online">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Host Your College Project Online for Free (Live Link for Your Viva)">
+<meta property="og:description" content="Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to GitHub without commands and deploy with HTTPS.">
+<meta property="og:url" content="https://shipzo.tech/guides/host-college-project-online">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff6b35'/%3E%3Cpath d='M8 20l8-12 8 12h-5v5h-6v-5z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Host Your College Project Online for Free (Live Link for Your Viva)", "description": "Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to GitHub without commands and deploy with HTTPS.", "url": "https://shipzo.tech/guides/host-college-project-online", "datePublished": "2026-10-25", "dateModified": "2026-10-25", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to host your college project online for free", "item": "https://shipzo.tech/guides/host-college-project-online"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this free for students?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Shipzo is free during the beta, with up to 3 projects per account and no card."}}, {"@type": "Question", "name": "Will the link still work after my viva?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Apps keep running until you delete them, so the link stays valid in your report and résumé."}}, {"@type": "Question", "name": "Can my whole team manage the project?", "acceptedAnswer": {"@type": "Answer", "text": "Each project belongs to one account. Teammates can push to the GitHub repo, and every push redeploys automatically."}}, {"@type": "Question", "name": "My project is in Java (console app). Can I host it?", "acceptedAnswer": {"@type": "Answer", "text": "Shipzo hosts web apps that answer HTTP requests. A console program needs a web interface first, for example a small Spring Boot or Flask front end."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / Students · PBL · Viva</div>
+  <div class="layout">
+    <article>
+      <h1>How to host your college project online for free</h1>
+      <div class="meta"><span>Students · PBL · Viva</span><span>7 min read</span><span>Updated 25 October 2026</span></div>
+      <p class="lede">A working live link beats screenshots in every viva, project report and résumé. Here's how to put your college project online for free, even if you've never used Git.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Name your main page <code>index.html</code>, and use relative file paths.</li><li>Upload the project to GitHub through the website (no commands needed).</li><li>Deploy it on Shipzo from the GitHub link.</li><li>Put the link and a QR code in your report and slides.</li></ol></div>
+      
+<h2 id="which">Which type of project do you have?</h2>
+<div class="tbl"><table><thead><tr><th>Your project</th><th>What the host looks for</th><th>Guide</th></tr></thead><tbody>
+<tr><td>HTML, CSS, JavaScript website</td><td><code>index.html</code></td><td>This page</td></tr>
+<tr><td>Python Flask / Django</td><td><code>requirements.txt</code></td><td><a href="/guides/deploy-flask-app-free">Flask guide</a></td></tr>
+<tr><td>Machine learning with Streamlit</td><td><code>streamlit</code> in requirements</td><td><a href="/guides/host-streamlit-app-free">Streamlit guide</a></td></tr>
+<tr><td>Node.js / Express</td><td><code>package.json</code></td><td><a href="/guides/deploy-node-express-app-free">Express guide</a></td></tr>
+<tr><td>React / Vite</td><td><code>package.json</code> with a build script</td><td><a href="/guides/deploy-react-vite-app">React guide</a></td></tr>
+<tr><td>PHP</td><td><code>index.php</code></td><td>Works the same way; use a hosted database for MySQL</td></tr>
+</tbody></table></div>
+
+<h2 id="prepare">Step 1: Get your files ready (HTML/CSS/JS projects)</h2>
+<ul>
+<li><b>Name the main page <code>index.html</code></b> and keep it in the top folder. Web servers open <code>index.html</code> by default, so a site whose main page is <code>calculator.html</code> shows "not found" at the home address.</li>
+<li><b>Use relative paths.</b> <code>&lt;img src="images/logo.png"&gt;</code> works everywhere. <code>&lt;img src="C:\Users\you\Desktop\logo.png"&gt;</code> only works on your laptop.</li>
+<li><b>Match capital letters exactly.</b> Windows doesn't care, but servers do: <code>Logo.PNG</code> and <code>logo.png</code> are different files.</li>
+<li>Open <code>index.html</code> in your browser one last time and click every link and button.</li>
+</ul>
+<pre><code>my-project/
+├── index.html      ← main page
+├── about.html
+├── style.css
+├── script.js
+└── images/
+    └── logo.png</code></pre>
+
+<h2 id="github">Step 2: Upload to GitHub (no commands needed)</h2>
+<ol>
+<li>Sign in to <a href="https://github.com" rel="noopener">github.com</a> → click <b>+</b> → <b>New repository</b>.</li>
+<li>Give it a name like <code>library-management-system</code>, keep it <b>Public</b>, and click <b>Create repository</b>.</li>
+<li>Click <b>uploading an existing file</b>, drag all your project files and folders in, and click <b>Commit changes</b>.</li>
+</ol>
+<p>Comfortable with the terminal? Use <code>git init</code>, <code>git add .</code>, <code>git commit</code> and <code>git push</code> instead. Commit history also shows your teacher who contributed what.</p>
+
+<h2 id="deploy">Step 3: Deploy it</h2>
+<ol>
+<li><a href="/signup">Create a free Shipzo account</a> (pick "College or school project" when asked).</li>
+<li>Click <b>New deployment</b>, paste your GitHub link, and press <b>Deploy</b>.</li>
+<li>About a minute later your project is live at <code>https://your-project.shipzo.tech</code>, with HTTPS.</li>
+</ol>
+<p>If your project is in a sub-folder of the repo (for example <code>frontend/</code>), set the <b>Root directory</b> in the deployment form.</p>
+
+<h2 id="viva">Step 4: Use the link in your viva and report</h2>
+<ul>
+<li><b>Report:</b> add a "Deployment" section with the live link, the GitHub link, and one line on how it's hosted (container, HTTPS, CI/CD).</li>
+<li><b>Slides:</b> add a QR code of the link so examiners can open it on their phones.</li>
+<li><b>Résumé and LinkedIn:</b> list the live link next to each project. Recruiters click links; they don't download ZIP files.</li>
+<li><b>Before the viva:</b> open the link on mobile data to check it works outside the college Wi-Fi.</li>
+</ul>
+<div class="note"><b>Talking about it in your viva:</b> "Our project is containerized with Docker, deployed through a CI/CD pipeline that runs automated tests, served over HTTPS on its own subdomain, and monitored with automatic restarts." Every part of that sentence is true for apps deployed on Shipzo.</div>
+
+<h2 id="database">Projects with a database</h2>
+<p>If your project uses MySQL, MongoDB or PostgreSQL on your laptop (<code>localhost</code>), the deployed version can't reach it. Use a free hosted database (MongoDB Atlas, Neon or Supabase), and put its connection string in your project's <b>Environment variables</b> instead of in the code.</p>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Is this free for students?</summary><p>Yes. Shipzo is free during the beta, with up to 3 projects per account and no card.</p></details><details><summary>Will the link still work after my viva?</summary><p>Yes. Apps keep running until you delete them, so the link stays valid in your report and résumé.</p></details><details><summary>Can my whole team manage the project?</summary><p>Each project belongs to one account. Teammates can push to the GitHub repo, and every push redeploys automatically.</p></details><details><summary>My project is in Java (console app). Can I host it?</summary><p>Shipzo hosts web apps that answer HTTP requests. A console program needs a web interface first, for example a small Spring Boot or Flask front end.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-flask-app-free"><span>Python · Flask</span><b>How to deploy a Flask app for free</b><p>Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy…</p></a><a class="card" href="/guides/host-streamlit-app-free"><span>Python · Streamlit · ML</span><b>How to host a Streamlit app online for free</b><p>Put your Streamlit machine-learning app online with a free HTTPS link. Structure the repo, pin requirements, load models…</p></a><a class="card" href="/guides/deploy-react-vite-app"><span>JavaScript · React · Vite</span><b>How to deploy a React (Vite) app with a free HTTPS link</b><p>Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables,…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#which">Which type of project do you have?</a><a href="#prepare">Step 1: Get your files ready (HTML/CSS/JS projects)</a><a href="#github">Step 2: Upload to GitHub (no commands needed)</a><a href="#deploy">Step 3: Deploy it</a><a href="#viva">Step 4: Use the link in your viva and report</a><a href="#database">Projects with a database</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

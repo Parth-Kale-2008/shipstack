@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Deploy a Flask App for Free (Step-by-Step, 2026)</title>
+<meta name="description" content="Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy with automatic tests, Docker and gunicorn.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-flask-app-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Deploy a Flask App for Free (Step-by-Step, 2026)">
+<meta property="og:description" content="Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy with automatic tests, Docker and gunicorn.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-flask-app-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff6b35'/%3E%3Cpath d='M8 20l8-12 8 12h-5v5h-6v-5z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Deploy a Flask App for Free (Step-by-Step, 2026)", "description": "Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy with automatic tests, Docker and gunicorn.", "url": "https://shipzo.tech/guides/deploy-flask-app-free", "datePublished": "2026-10-25", "dateModified": "2026-10-25", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a Flask app for free", "item": "https://shipzo.tech/guides/deploy-flask-app-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is it really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Shipzo is free during the beta, with up to 3 projects per account and no card required."}}, {"@type": "Question", "name": "Does my Flask app go to sleep when nobody visits?", "acceptedAnswer": {"@type": "Answer", "text": "No. Apps on Shipzo keep running, so the first visitor after a quiet hour doesn't wait for a cold start."}}, {"@type": "Question", "name": "Can I deploy Django or FastAPI the same way?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Shipzo detects Django from manage.py and FastAPI from requirements.txt, and starts them with gunicorn or uvicorn."}}, {"@type": "Question", "name": "Can I use my own domain?", "acceptedAnswer": {"@type": "Answer", "text": "During the beta every app gets a free HTTPS subdomain on shipzo.tech. Custom domains are on the roadmap."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / Python · Flask</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a Flask app for free</h1>
+      <div class="meta"><span>Python · Flask</span><span>8 min read</span><span>Updated 25 October 2026</span></div>
+      <p class="lede">You built a Flask app that works on <code>localhost:5000</code>. This guide gets it onto the internet with a real HTTPS link you can share, in about ten minutes, without paying anything.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Bind to <code>0.0.0.0</code> and read the port from the <code>PORT</code> environment variable.</li><li>List every package in <code>requirements.txt</code> (add <code>gunicorn</code> for production).</li><li>Push the code to GitHub.</li><li>Paste the repo link into Shipzo and press Deploy. You get <code>https://your-app.shipzo.tech</code>.</li></ol></div>
+      
+<h2 id="what-you-need">What you need</h2>
+<ul><li>A Flask app that runs on your computer</li><li>A free <a href="https://github.com" rel="noopener">GitHub</a> account</li><li>A free <a href="/signup">Shipzo account</a> (no credit card)</li></ul>
+
+<h2 id="prepare">Step 1: Make your app ready for a server</h2>
+<p>On your laptop, Flask's development server listens on <code>127.0.0.1:5000</code>. A hosting server tells your app which port to use through an environment variable called <code>PORT</code>, and it must listen on all network interfaces (<code>0.0.0.0</code>), not just localhost. Change the bottom of your main file like this:</p>
+<p class="file">app.py</p>
+<pre><code>import os
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/health")
+def health():
+    return {"status": "ok"}
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)</code></pre>
+<p>Keep the Flask object named <code>app</code> and the file named <code>app.py</code> (or <code>main.py</code>). Most hosts, Shipzo included, look for exactly that.</p>
+
+<h3>Write requirements.txt</h3>
+<p>The server installs only what is listed here. If you installed something with <code>pip install</code> and forgot to list it, the deploy fails with <code>ModuleNotFoundError</code>.</p>
+<p class="file">requirements.txt</p>
+<pre><code>Flask&gt;=3.0,&lt;4
+gunicorn&gt;=22</code></pre>
+<p>To capture everything your project uses, run <code>pip freeze &gt; requirements.txt</code> inside your virtual environment, then delete lines you don't need.</p>
+<div class="note"><b>Why gunicorn?</b> Flask's built-in server is for development only: it handles one request at a time and isn't hardened. In production you run a WSGI server such as gunicorn: <code>gunicorn app:app --bind 0.0.0.0:$PORT --workers 2</code>. Gunicorn doesn't run on Windows, so keep using <code>python app.py</code> locally.</div>
+
+<h3>Add a .gitignore</h3>
+<p class="file">.gitignore</p>
+<pre><code>venv/
+.venv/
+__pycache__/
+*.pyc
+.env</code></pre>
+<p>Never commit <code>.env</code> files, passwords or API keys. You'll add secrets as environment variables on the server instead.</p>
+
+<h2 id="github">Step 2: Push your code to GitHub</h2>
+<p>Create an empty repository on GitHub, then run these commands in your project folder:</p>
+<pre><code>git init
+git add .
+git commit -m "First version"
+git branch -M main
+git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
+git push -u origin main</code></pre>
+
+<h2 id="deploy">Step 3: Deploy it</h2>
+<ol>
+<li><a href="/signup">Create a free Shipzo account</a> and open <b>New deployment</b>.</li>
+<li>Paste your repository link, for example <code>https://github.com/you/flask-app</code>.</li>
+<li>Pick the <b>Starter</b> plan (enough for most Flask apps) and press <b>Deploy</b>.</li>
+</ol>
+<p>Here's what happens automatically, in order:</p>
+<div class="tbl"><table><thead><tr><th>Stage</th><th>What it does</th></tr></thead><tbody>
+<tr><td>Fetch source</td><td>Clones your repo</td></tr>
+<tr><td>Detect &amp; scan</td><td>Sees <code>requirements.txt</code> and a Flask app, and checks for committed secrets</td></tr>
+<tr><td>Automated tests</td><td>Runs <code>pytest</code> if you have <code>test_*.py</code> files. Failing tests stop the deploy</td></tr>
+<tr><td>Build</td><td>Builds a Docker image with Python 3.12 and gunicorn</td></tr>
+<tr><td>Deploy &amp; health check</td><td>Starts the container and waits for <code>GET /</code> to answer</td></tr>
+<tr><td>Go live</td><td>Your app is at <code>https://your-app.shipzo.tech</code> with HTTPS</td></tr>
+</tbody></table></div>
+
+<h2 id="updates">Step 4: Updating your app</h2>
+<p>Just push again. Shipzo checks your branch every minute and redeploys new commits with zero downtime. If the new version fails its tests or health check, the old one keeps running.</p>
+<pre><code>git add .
+git commit -m "Add contact page"
+git push</code></pre>
+
+<h2 id="database">Databases and secrets</h2>
+<p>Don't rely on a SQLite file for real data: every deploy starts from a clean container, so the file resets. Use a free hosted database such as Neon or Supabase (PostgreSQL) or MongoDB Atlas, and pass the connection string as an environment variable:</p>
+<pre><code>import os
+DATABASE_URL = os.environ["DATABASE_URL"]</code></pre>
+<p>In Shipzo, open your project → <b>Settings</b> → <b>Environment variables</b> and add <code>DATABASE_URL=...</code>. Values are injected at runtime and masked in every log.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Error</th><th>Fix</th></tr></thead><tbody>
+<tr><td><code>ModuleNotFoundError: No module named 'x'</code></td><td>Add the package to <code>requirements.txt</code> and push again.</td></tr>
+<tr><td>Health check timed out</td><td>Your app listens on <code>127.0.0.1</code> or a fixed port. Use <code>host="0.0.0.0"</code> and the <code>PORT</code> variable.</td></tr>
+<tr><td>App exits during start-up</td><td>Read the last lines in the build log. Usually a missing environment variable or a crash at import time.</td></tr>
+<tr><td><code>TemplateNotFound</code></td><td>Linux is case-sensitive: <code>Templates/</code> is not <code>templates/</code>, and <code>Index.html</code> is not <code>index.html</code>.</td></tr>
+<tr><td>Can't find the app object</td><td>Name it <code>app = Flask(__name__)</code> in <code>app.py</code>, or set a custom start command in Settings.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Is it really free?</summary><p>Yes. Shipzo is free during the beta, with up to 3 projects per account and no card required.</p></details><details><summary>Does my Flask app go to sleep when nobody visits?</summary><p>No. Apps on Shipzo keep running, so the first visitor after a quiet hour doesn&#x27;t wait for a cold start.</p></details><details><summary>Can I deploy Django or FastAPI the same way?</summary><p>Yes. Shipzo detects Django from manage.py and FastAPI from requirements.txt, and starts them with gunicorn or uvicorn.</p></details><details><summary>Can I use my own domain?</summary><p>During the beta every app gets a free HTTPS subdomain on shipzo.tech. Custom domains are on the roadmap.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/host-streamlit-app-free"><span>Python · Streamlit · ML</span><b>How to host a Streamlit app online for free</b><p>Put your Streamlit machine-learning app online with a free HTTPS link. Structure the repo, pin requirements, load models…</p></a><a class="card" href="/guides/deploy-node-express-app-free"><span>JavaScript · Node.js · Express</span><b>How to deploy a Node.js Express app for free</b><p>Deploy a Node.js Express API or website for free: listen on process.env.PORT, set a start script, connect MongoDB Atlas with…</p></a><a class="card" href="/guides/host-college-project-online"><span>Students · PBL · Viva</span><b>How to host your college project online for free</b><p>Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#what-you-need">What you need</a><a href="#prepare">Step 1: Make your app ready for a server</a><a href="#github">Step 2: Push your code to GitHub</a><a href="#deploy">Step 3: Deploy it</a><a href="#updates">Step 4: Updating your app</a><a href="#database">Databases and secrets</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Deploy a React (Vite) App with a Free HTTPS Link</title>
+<meta name="description" content="Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables, and get a free HTTPS link from GitHub.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-react-vite-app">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Deploy a React (Vite) App with a Free HTTPS Link">
+<meta property="og:description" content="Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables, and get a free HTTPS link from GitHub.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-react-vite-app">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff6b35'/%3E%3Cpath d='M8 20l8-12 8 12h-5v5h-6v-5z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Deploy a React (Vite) App with a Free HTTPS Link", "description": "Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables, and get a free HTTPS link from GitHub.", "url": "https://shipzo.tech/guides/deploy-react-vite-app", "datePublished": "2026-10-25", "dateModified": "2026-10-25", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a React (Vite) app with a free HTTPS link", "item": "https://shipzo.tech/guides/deploy-react-vite-app"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does this work for Vue, Svelte or Angular?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Any project with a build script that outputs static files is detected and served the same way."}}, {"@type": "Question", "name": "What about Next.js?", "acceptedAnswer": {"@type": "Answer", "text": "Next.js is detected separately and runs as a Node server (next build, then next start), so server-side rendering works."}}, {"@type": "Question", "name": "Is it free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, during the beta, with up to 3 projects per account."}}, {"@type": "Question", "name": "Can my React app call my own backend?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Deploy the backend as its own Shipzo project and put its URL in a VITE_ variable."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / JavaScript · React · Vite</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a React (Vite) app with a free HTTPS link</h1>
+      <div class="meta"><span>JavaScript · React · Vite</span><span>7 min read</span><span>Updated 25 October 2026</span></div>
+      <p class="lede">A React app built with Vite compiles to plain static files: HTML, JavaScript and CSS. Hosting it is easy once you know three gotchas: the build folder, client-side routes, and environment variables.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li><code>npm run build</code> creates a <code>dist/</code> folder. That folder is your website.</li><li>Single-page apps need every unknown URL to serve <code>index.html</code>, or refreshes give 404s.</li><li>Environment variables must start with <code>VITE_</code> and are baked in at build time.</li><li>Push to GitHub, deploy on Shipzo, and you get <code>https://your-app.shipzo.tech</code>.</li></ol></div>
+      
+<h2 id="build">Step 1: Check that it builds</h2>
+<p>Before deploying anything, make sure a production build works on your machine:</p>
+<pre><code>npm install
+npm run build
+npm run preview   # serves dist/ at http://localhost:4173</code></pre>
+<p>If <code>npm run build</code> fails locally, it will fail on any host. TypeScript and ESLint errors are the usual cause.</p>
+
+<h2 id="base">Step 2: Get the base path right</h2>
+<p>A blank white page after deploying almost always means the browser can't load your JavaScript files. If your app is served from the root of a domain (like <code>https://my-app.shipzo.tech/</code>), keep the default:</p>
+<p class="file">vite.config.js</p>
+<pre><code>import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/',          // change only if the app lives in a sub-folder
+})</code></pre>
+
+<h2 id="routing">Step 3: Client-side routing (React Router)</h2>
+<p>With React Router, a URL like <code>/dashboard</code> exists only in JavaScript. When someone refreshes that page, the server looks for a file called <code>dashboard</code>, finds nothing, and returns 404. The fix is a <b>fallback</b>: any path that isn't a real file serves <code>index.html</code>. With nginx, that's:</p>
+<pre><code>location / {
+  try_files $uri $uri/ /index.html;
+}</code></pre>
+<p>Shipzo adds exactly this configuration automatically when it detects a Vite or Create React App project, so deep links and refreshes just work.</p>
+
+<h2 id="env">Step 4: Environment variables</h2>
+<p>Vite only exposes variables that start with <code>VITE_</code>, and it replaces them <b>when the app is built</b>:</p>
+<pre><code>const api = import.meta.env.VITE_API_URL</code></pre>
+<ul>
+<li>Add <code>VITE_API_URL=https://my-api.shipzo.tech</code> in your project's Settings → Environment variables, then <b>redeploy</b>. Shipzo writes <code>VITE_</code>, <code>REACT_APP_</code> and <code>NEXT_PUBLIC_</code> variables into the build automatically, but changing a variable doesn't update an app that's already built.</li>
+<li>Anything in a <code>VITE_</code> variable ends up in the public JavaScript bundle. <b>Never put secret keys there.</b> Keep secrets in a backend.</li>
+</ul>
+
+<h2 id="deploy">Step 5: Push and deploy</h2>
+<pre><code>git add .
+git commit -m "Ready to deploy"
+git push</code></pre>
+<ol>
+<li><a href="/signup">Create a free Shipzo account</a> → <b>New deployment</b>.</li>
+<li>Paste the repo link and press <b>Deploy</b>.</li>
+</ol>
+<p>Shipzo installs your dependencies (including dev dependencies, which Vite needs to build), runs <code>npm run build</code>, finds the output folder (<code>dist/</code>, <code>build/</code> or <code>out/</code>), and serves it with nginx and HTTPS. Every later <code>git push</code> redeploys automatically.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Fix</th></tr></thead><tbody>
+<tr><td>Blank page, console shows 404s for <code>.js</code> files</td><td>Wrong <code>base</code> in <code>vite.config.js</code>. Use <code>'/'</code> for a root domain.</td></tr>
+<tr><td>404 when refreshing a page</td><td>Missing SPA fallback to <code>index.html</code> (automatic on Shipzo).</td></tr>
+<tr><td><code>import.meta.env.X</code> is <code>undefined</code></td><td>The name must start with <code>VITE_</code>, and you must redeploy after adding it.</td></tr>
+<tr><td><code>vite: not found</code> during build</td><td>The host skipped dev dependencies. Shipzo installs them for the build step.</td></tr>
+<tr><td>Build fails on the server but not locally</td><td>Case-sensitive imports: <code>./Header</code> is not <code>./header</code> on Linux.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Does this work for Vue, Svelte or Angular?</summary><p>Yes. Any project with a build script that outputs static files is detected and served the same way.</p></details><details><summary>What about Next.js?</summary><p>Next.js is detected separately and runs as a Node server (next build, then next start), so server-side rendering works.</p></details><details><summary>Is it free?</summary><p>Yes, during the beta, with up to 3 projects per account.</p></details><details><summary>Can my React app call my own backend?</summary><p>Yes. Deploy the backend as its own Shipzo project and put its URL in a VITE_ variable.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-node-express-app-free"><span>JavaScript · Node.js · Express</span><b>How to deploy a Node.js Express app for free</b><p>Deploy a Node.js Express API or website for free: listen on process.env.PORT, set a start script, connect MongoDB Atlas with…</p></a><a class="card" href="/guides/host-college-project-online"><span>Students · PBL · Viva</span><b>How to host your college project online for free</b><p>Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to…</p></a><a class="card" href="/guides/deploy-flask-app-free"><span>Python · Flask</span><b>How to deploy a Flask app for free</b><p>Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#build">Step 1: Check that it builds</a><a href="#base">Step 2: Get the base path right</a><a href="#routing">Step 3: Client-side routing (React Router)</a><a href="#env">Step 4: Environment variables</a><a href="#deploy">Step 5: Push and deploy</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

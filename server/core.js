@@ -352,6 +352,14 @@ async function pipeline(p, d, target) {
       const ownDf = stack.ownDockerfile ? fs.readFileSync(path.join(src, 'Dockerfile'), 'utf8') : null;
       d.files = generatedFiles(p, stack, plan, ownDf);
       if (d.mode === 'native' && !stack.ownDockerfile) L('scan')('Docker is not available – the app will run as a native process (resource limits not enforced)', 'warn');
+      // Front-end frameworks read public variables at build time, not at runtime: write them where Vite/CRA/Next look.
+      if (['spa', 'next'].includes(stack.kind)) {
+        const pub = Object.entries(p.env || {}).filter(([k]) => /^(VITE_|REACT_APP_|NEXT_PUBLIC_|PUBLIC_)/.test(k));
+        if (pub.length) {
+          fs.writeFileSync(path.join(src, '.env.production.local'), pub.map(([k, v]) => `${k}=${v}`).join('\n') + '\n');
+          L('scan')(`Build-time variables: ${pub.map(([k]) => k).join(', ')}`);
+        }
+      }
       setStage('scan', 'success', stack.framework);
 
       /* 3. tests */

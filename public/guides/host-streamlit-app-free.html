@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Host a Streamlit App Online for Free (ML Projects, 2026)</title>
+<meta name="description" content="Put your Streamlit machine-learning app online with a free HTTPS link. Structure the repo, pin requirements, load models correctly, and deploy from GitHub in minutes.">
+<link rel="canonical" href="https://shipzo.tech/guides/host-streamlit-app-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Host a Streamlit App Online for Free (ML Projects, 2026)">
+<meta property="og:description" content="Put your Streamlit machine-learning app online with a free HTTPS link. Structure the repo, pin requirements, load models correctly, and deploy from GitHub in minutes.">
+<meta property="og:url" content="https://shipzo.tech/guides/host-streamlit-app-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff6b35'/%3E%3Cpath d='M8 20l8-12 8 12h-5v5h-6v-5z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Host a Streamlit App Online for Free (ML Projects, 2026)", "description": "Put your Streamlit machine-learning app online with a free HTTPS link. Structure the repo, pin requirements, load models correctly, and deploy from GitHub in minutes.", "url": "https://shipzo.tech/guides/host-streamlit-app-free", "datePublished": "2026-10-25", "dateModified": "2026-10-25", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to host a Streamlit app online for free", "item": "https://shipzo.tech/guides/host-streamlit-app-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Streamlit hosting free on Shipzo?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, during the beta. Up to 3 projects per account, no card."}}, {"@type": "Question", "name": "Can I deploy a Jupyter notebook?", "acceptedAnswer": {"@type": "Answer", "text": "Not directly. Move the code into app.py as a Streamlit app. That takes a few minutes and gives you a real interactive page."}}, {"@type": "Question", "name": "Will my app sleep?", "acceptedAnswer": {"@type": "Answer", "text": "No. Apps keep running, so examiners and recruiters don't wait for a cold start."}}, {"@type": "Question", "name": "Can I deploy Gradio or FastAPI instead?", "acceptedAnswer": {"@type": "Answer", "text": "FastAPI is detected automatically. For Gradio, set a custom start command in the project settings."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / Python · Streamlit · ML</div>
+  <div class="layout">
+    <article>
+      <h1>How to host a Streamlit app online for free</h1>
+      <div class="meta"><span>Python · Streamlit · ML</span><span>8 min read</span><span>Updated 25 October 2026</span></div>
+      <p class="lede">Streamlit is the fastest way to turn a machine-learning model into a web app. Getting it online is where most students get stuck. Here's exactly how to do it, using a real house-price predictor as the example.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Put <code>app.py</code>, <code>requirements.txt</code> and your model or data files in the repo root.</li><li>Load files with paths relative to the script, and cache the model with <code>@st.cache_resource</code>.</li><li>Push to GitHub and deploy on Shipzo. Streamlit's port and websockets are handled for you.</li><li>Use the Standard plan for heavier libraries like scikit-learn or TensorFlow.</li></ol></div>
+      
+<p>Live example: <a href="https://houseprice-predictor.shipzo.tech" rel="noopener">houseprice-predictor.shipzo.tech</a>, a Streamlit + scikit-learn app deployed straight from GitHub with the steps below.</p>
+
+<h2 id="structure">Step 1: Structure your repository</h2>
+<pre><code>house-price-predictor/
+├── app.py              # your Streamlit app
+├── model.pkl           # trained model (or train it at start-up)
+├── data.csv            # any data files the app reads
+├── requirements.txt
+└── tests/
+    └── test_model.py   # optional: runs before every deploy</code></pre>
+<p>Keep <code>app.py</code> in the root folder. If your app lives in a sub-folder, you can point the host to it later with a <b>root directory</b> setting.</p>
+
+<h2 id="requirements">Step 2: Pin your requirements</h2>
+<p class="file">requirements.txt</p>
+<pre><code>streamlit&gt;=1.39
+pandas&gt;=2.2
+scikit-learn&gt;=1.5
+joblib&gt;=1.4</code></pre>
+<p>Pin the scikit-learn version you trained with. A model pickled with one version can fail to load, or give different results, on another.</p>
+
+<h2 id="loading">Step 3: Load files and models the right way</h2>
+<p>The most common Streamlit deploy error is <code>FileNotFoundError</code>. Paths that work on your laptop break on a server because the working directory is different. Build paths from the script's own location, and cache the model so it loads once instead of on every click:</p>
+<p class="file">app.py</p>
+<pre><code>from pathlib import Path
+import joblib
+import pandas as pd
+import streamlit as st
+
+BASE = Path(__file__).parent
+
+@st.cache_resource
+def load_model():
+    return joblib.load(BASE / "model.pkl")
+
+@st.cache_data
+def load_data():
+    return pd.read_csv(BASE / "data.csv")
+
+st.title("🏠 House Price Predictor")
+area = st.number_input("Area (sq ft)", 300, 10000, 1100, step=50)
+bedrooms = st.slider("Bedrooms", 1, 6, 2)
+
+if st.button("Predict"):
+    price = load_model().predict([[area, bedrooms]])[0]
+    st.metric("Estimated price", f"₹ {price:,.1f} lakh")</code></pre>
+<div class="note"><b>Model file too big?</b> GitHub rejects files over 100 MB. Use a smaller model, compress it with <code>joblib.dump(model, "model.pkl", compress=3)</code>, or train it at start-up inside a cached function.</div>
+
+<h2 id="github">Step 4: Push to GitHub</h2>
+<pre><code>git init
+git add .
+git commit -m "Streamlit app"
+git branch -M main
+git remote add origin https://github.com/YOUR-USERNAME/house-price-predictor.git
+git push -u origin main</code></pre>
+
+<h2 id="deploy">Step 5: Deploy</h2>
+<ol>
+<li><a href="/signup">Sign up on Shipzo</a> (free) and open <b>New deployment</b>.</li>
+<li>Paste the repo link.</li>
+<li>Choose <b>Standard</b> if you use scikit-learn, TensorFlow or PyTorch, or <b>Starter</b> for light apps. Then press <b>Deploy</b>.</li>
+</ol>
+<p>Shipzo spots <code>streamlit</code> in your requirements and runs the equivalent of:</p>
+<pre><code>streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true</code></pre>
+<p>Streamlit talks to the browser over a websocket, which some proxies block (you'd see the app stuck on "Please wait…"). Shipzo passes websockets through, so this just works.</p>
+<p>The first build of a data-science app takes 5–8 minutes because pandas and scikit-learn are large. Later deploys are faster.</p>
+
+<h2 id="tests">Optional: test your model before every deploy</h2>
+<p>Add a quick pytest file and every push is checked before it goes live:</p>
+<p class="file">tests/test_model.py</p>
+<pre><code>from pathlib import Path
+import joblib
+
+MODEL = joblib.load(Path(__file__).parent.parent / "model.pkl")
+
+def test_price_is_positive():
+    assert MODEL.predict([[1000, 2]])[0] &gt; 0
+
+def test_more_area_costs_more():
+    assert MODEL.predict([[2000, 2]])[0] &gt; MODEL.predict([[1000, 2]])[0]</code></pre>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Fix</th></tr></thead><tbody>
+<tr><td><code>FileNotFoundError</code> for a CSV or model</td><td>Use <code>Path(__file__).parent / "file"</code>, and make sure the file is committed (check <code>.gitignore</code>).</td></tr>
+<tr><td>App stuck on "Please wait…"</td><td>Websockets are blocked by the host or a proxy. Shipzo supports them, so check your browser's network tab for errors.</td></tr>
+<tr><td>Container restarts or is killed</td><td>Out of memory. Switch to the Standard or Pro plan, or load a lighter model.</td></tr>
+<tr><td>Model gives errors after loading</td><td>The scikit-learn version differs from the one you trained with. Pin it in <code>requirements.txt</code>.</td></tr>
+<tr><td>Every click is slow</td><td>Wrap model and data loading in <code>@st.cache_resource</code> / <code>@st.cache_data</code>.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Is Streamlit hosting free on Shipzo?</summary><p>Yes, during the beta. Up to 3 projects per account, no card.</p></details><details><summary>Can I deploy a Jupyter notebook?</summary><p>Not directly. Move the code into app.py as a Streamlit app. That takes a few minutes and gives you a real interactive page.</p></details><details><summary>Will my app sleep?</summary><p>No. Apps keep running, so examiners and recruiters don&#x27;t wait for a cold start.</p></details><details><summary>Can I deploy Gradio or FastAPI instead?</summary><p>FastAPI is detected automatically. For Gradio, set a custom start command in the project settings.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-flask-app-free"><span>Python · Flask</span><b>How to deploy a Flask app for free</b><p>Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy…</p></a><a class="card" href="/guides/host-college-project-online"><span>Students · PBL · Viva</span><b>How to host your college project online for free</b><p>Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to…</p></a><a class="card" href="/guides/deploy-react-vite-app"><span>JavaScript · React · Vite</span><b>How to deploy a React (Vite) app with a free HTTPS link</b><p>Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables,…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#structure">Step 1: Structure your repository</a><a href="#requirements">Step 2: Pin your requirements</a><a href="#loading">Step 3: Load files and models the right way</a><a href="#github">Step 4: Push to GitHub</a><a href="#deploy">Step 5: Deploy</a><a href="#tests">Optional: test your model before every deploy</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

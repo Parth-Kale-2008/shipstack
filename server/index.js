@@ -342,7 +342,10 @@ function serveStatic(req, res, url) {
   if (me && url.pathname !== '/admin') { res.writeHead(302, { Location: '/app' }); return res.end(); }
   if (url.pathname === '/admin' && !accounts.isAdmin(me)) { const pg = proxy.page('Page not found', 'Go back to <a href="/" style="color:#ff8f61">shipzo.tech</a>.', 404); res.writeHead(404, { 'Content-Type': MIME['.html'] }); return res.end(pg.html); }
   const page = PAGES[url.pathname];
-  let file = path.normalize(path.join(PUB, page || decodeURIComponent(url.pathname)));
+  let rel = page || decodeURIComponent(url.pathname);
+  // Clean URLs for content pages: /guides → guides/index.html, /guides/foo → guides/foo.html
+  if (!page && !path.extname(rel)) rel = fs.existsSync(path.join(PUB, rel + '.html')) ? rel + '.html' : path.join(rel, 'index.html');
+  let file = path.normalize(path.join(PUB, rel));
   if (!file.startsWith(PUB + path.sep) || (!page && /^(admin|auth|landing|legal)\.html$/.test(path.basename(file)))) return send(res, 404, 'Not found');
   fs.readFile(file, (err, buf) => {
     if (err) {
