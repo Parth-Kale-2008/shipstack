@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { IS_WIN, DATA, run, killTree, exists, mkdirp, copyDir } = require('./util');
-const { dockerfile, NGINX } = require('./detect');
+const { dockerfile, nginxConf } = require('./detect');
 
 const info = { docker: false, dockerVersion: null, git: null, python: null, go: false, node: process.version };
 
@@ -42,7 +42,7 @@ const docker = {
     if (!s.ownDockerfile) {
       file = 'Dockerfile.shipstack';
       fs.writeFileSync(path.join(src, file), dockerfile(s, p.overrides));
-      if (s.spa) fs.writeFileSync(path.join(src, 'shipstack-nginx.conf'), NGINX);
+      if (s.spa) fs.writeFileSync(path.join(src, 'shipstack-nginx.conf'), nginxConf(s.indexFile));
     }
     if (!exists(path.join(src, '.dockerignore'))) fs.writeFileSync(path.join(src, '.dockerignore'), 'node_modules\n.git\n.venv\nvenv\n__pycache__\n.env\n');
     log(`$ docker build -t ${image} -f ${file} .`, 'cmd');
@@ -142,7 +142,7 @@ const native = {
       if (r.code !== 0) throw new Error('Build command failed');
     } else log('No build step needed');
     const release = { mode: 'native', dir, kind: s.kind, containerPort: null };
-    if (s.kind === 'static') release.staticDir = path.join(dir, s.staticRoot || '.');
+    if (s.kind === 'static') { release.staticDir = path.join(dir, s.staticRoot || '.'); release.indexFile = s.indexFile || 'index.html'; }
     if (s.kind === 'spa') {
       const out = ['dist', 'build', 'out'].map((d) => findIndex(path.join(dir, d), 4)).find(Boolean);
       if (!out) throw new Error('Build finished but no index.html was found in dist/, build/ or out/');
@@ -169,7 +169,7 @@ const native = {
   },
 
   async start(p, dep, release, upPort, env, plan, log = () => {}, stack) {
-    if (release.staticDir) return { type: 'static', dir: release.staticDir, spa: release.kind !== 'static' || true };
+    if (release.staticDir) return { type: 'static', dir: release.staticDir, spa: true, index: release.indexFile || 'index.html' };
     const c = native.command(release, stack, upPort, p.overrides);
     log(`$ ${[c.cmd === process.execPath ? 'node' : path.basename(c.cmd), ...c.args].join(' ')}   (PORT=${upPort})`, 'cmd');
     const opts = { cwd: release.dir, env: { ...process.env, ...env, PORT: String(upPort), HOST: '0.0.0.0', NODE_ENV: 'production', PYTHONUNBUFFERED: '1' }, windowsHide: true, detached: !IS_WIN };

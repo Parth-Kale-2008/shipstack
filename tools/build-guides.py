@@ -293,7 +293,7 @@ h1='How to host your college project online for free',
 description='Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to GitHub without commands and deploy with HTTPS.',
 tag='Students · PBL · Viva', read='7 min read',
 lede='A working live link beats screenshots in every viva, project report and résumé. Here\'s how to put your college project online for free, even if you\'ve never used Git.',
-tldr=['Name your main page <code>index.html</code>, and use relative file paths.', 'Upload the project to GitHub through the website (no commands needed).', 'Deploy it on Shipzo from the GitHub link.', 'Put the link and a QR code in your report and slides.'],
+tldr=['Use relative file paths, and ideally name your main page <code>index.html</code>.', 'Upload the project to GitHub through the website (no commands needed).', 'Deploy it on Shipzo from the GitHub link.', 'Put the link and a QR code in your report and slides.'],
 body=r'''
 <h2 id="which">Which type of project do you have?</h2>
 <div class="tbl"><table><thead><tr><th>Your project</th><th>What the host looks for</th><th>Guide</th></tr></thead><tbody>
@@ -307,7 +307,7 @@ body=r'''
 
 <h2 id="prepare">Step 1: Get your files ready (HTML/CSS/JS projects)</h2>
 <ul>
-<li><b>Name the main page <code>index.html</code></b> and keep it in the top folder. Web servers open <code>index.html</code> by default, so a site whose main page is <code>calculator.html</code> shows "not found" at the home address.</li>
+<li><b>Ideally name the main page <code>index.html</code></b> and keep it in the top folder. Web servers open <code>index.html</code> by default. If your main page has another name, such as <code>calculator.html</code>, Shipzo picks it as the home page automatically.</li>
 <li><b>Use relative paths.</b> <code>&lt;img src="images/logo.png"&gt;</code> works everywhere. <code>&lt;img src="C:\Users\you\Desktop\logo.png"&gt;</code> only works on your laptop.</li>
 <li><b>Match capital letters exactly.</b> Windows doesn't care, but servers do: <code>Logo.PNG</code> and <code>logo.png</code> are different files.</li>
 <li>Open <code>index.html</code> in your browser one last time and click every link and button.</li>

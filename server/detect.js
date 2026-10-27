@@ -18,6 +18,54 @@ function listFiles(dir, depth = 2, base = dir, out = []) {
   return out;
 }
 
+// Pick the main page of a static site that has no index.html (e.g. calc.html, PBL.html).
+function mainHtml(dir, htmlFiles, hint) {
+  if (htmlFiles.length === 1) return htmlFiles[0];
+  const norm = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const scored = htmlFiles.map((f) => {
+    const base = norm(f.replace(/\.html?$/i, ''));
+    const text = readText(path.join(dir, f));
+    let score = (text.match(/href=["'][^"':]+\.html?["']/gi) || []).length * 10 + Math.min(text.length / 1000, 30);
+    if (/^(home|main|default|start|landing|welcome)$/.test(base)) score += 500;
+    if (hint && base && (norm(hint).includes(base) || base.includes(norm(hint)))) score += 300;
+    if (/^(login|signin|signup|register|404|error|test)/.test(base)) score -= 200;
+    return { f, score };
+  });
+  return scored.sort((a, b) => b.score - a.score)[0].f;
+}
+
+const BUILTINS = new Set(require('module').builtinModules.flatMap((m) => [m, `node:${m}`]));
+// Node projects without package.json: build one from the require()/import statements.
+function inferNodeProject(dir, files) {
+  const js = files.filter((f) => /\.(c|m)?js$/.test(f) && !/(^|\/)(public|static|assets|dist|build)\//.test(f));
+  const sources = js.map((f) => [f, readText(path.join(dir, f))]);
+  const server = sources.filter(([, t]) => /\.listen\s*\(/.test(t) && /require\(\s*['"](express|fastify|koa|http|@hapi\/hapi)['"]\s*\)|from\s+['"](express|fastify|koa|http)['"]/.test(t));
+  if (!server.length) return null;
+  const pref = ['server.js', 'app.js', 'index.js', 'main.js'];
+  const entry = (server.find(([f]) => pref.includes(f)) || server.sort((a, b) => a[0].split('/').length - b[0].split('/').length)[0])[0];
+  const deps = {};
+  for (const [, t] of sources) {
+    for (const m of t.matchAll(/require\(\s*['"]([^'"]+)['"]\s*\)|^\s*import\s+(?:[^'"]+\s+from\s+)?['"]([^'"]+)['"]/gm)) {
+      const name = m[1] || m[2];
+      if (!name || name.startsWith('.') || name.startsWith('/') || BUILTINS.has(name) || BUILTINS.has(name.split('/')[0])) continue;
+      const pkg = name.startsWith('@') ? name.split('/').slice(0, 2).join('/') : name.split('/')[0];
+      deps[pkg] = '*';
+    }
+    const engine = t.match(/set\(\s*['"]view engine['"]\s*,\s*['"]([\w-]+)['"]/);
+    if (engine && !BUILTINS.has(engine[1])) deps[engine[1]] = '*';
+  }
+  const esm = sources.some(([f, t]) => f === entry && /^\s*import\s/m.test(t)) && !entry.endsWith('.cjs');
+  return { entry, deps, pkg: { name: 'app', version: '1.0.0', private: true, main: entry, ...(esm ? { type: 'module' } : {}), scripts: { start: `node ${entry}` }, dependencies: deps } };
+}
+
+// Port a Node app listens on when it ignores process.env.PORT (e.g. app.listen(8080)).
+function nodePort(dir, entry) {
+  const t = readText(path.join(dir, entry));
+  if (/process\.env\.PORT/.test(t)) return null;
+  const m = t.match(/\.listen\(\s*(\d{2,5})/) || t.match(/(?:const|let|var)\s+port\s*=\s*(\d{2,5})/i);
+  return m ? +m[1] : null;
+}
+
 function pythonTarget(dir, files, wanted) {
   const order = ['app.py', 'main.py', 'wsgi.py', 'application.py', 'server.py', 'api.py', 'streamlit_app.py'];
   const file = order.find((f) => files.includes(f)) || files.find((f) => f.endsWith('.py') && !f.includes('/') && !f.startsWith('test')) || 'app.py';
@@ -27,7 +75,7 @@ function pythonTarget(dir, files, wanted) {
 }
 
 /** Inspect a source folder and decide how to build, test and run it. */
-function detect(dir, overrides = {}) {
+function detect(dir, overrides = {}, hint = '') {
   const files = listFiles(dir);
   const has = (f) => files.includes(f);
   const s = { ownDockerfile: false, tests: null, spa: false };
@@ -49,7 +97,7 @@ function detect(dir, overrides = {}) {
     } else {
       const entry = ['server.js', 'index.js', 'app.js', 'main.js', 'src/server.js', 'src/index.js', 'src/app.js'].find(has) || pkg.main || 'index.js';
       const fw = deps.express ? 'Express' : deps.fastify ? 'Fastify' : deps.koa ? 'Koa' : deps['@nestjs/core'] ? 'NestJS' : 'Node.js';
-      Object.assign(s, { kind: 'node', framework: fw, stack: 'node', containerPort: 3000, entry, startScript: !!scripts.start, buildScript: !!scripts.build });
+      Object.assign(s, { kind: 'node', framework: fw, stack: 'node', containerPort: nodePort(dir, entry) || 3000, fixedPort: !!nodePort(dir, entry), entry, startScript: !!scripts.start, buildScript: !!scripts.build });
     }
   } else if (has('requirements.txt') || has('pyproject.toml') || has('Pipfile')) {
     const req = (readText(path.join(dir, 'requirements.txt')) + readText(path.join(dir, 'pyproject.toml'))).toLowerCase();
@@ -71,7 +119,15 @@ function detect(dir, overrides = {}) {
     if (files.some((f) => f.endsWith('_test.go'))) s.tests = 'go test';
   } else if (has('index.html') || files.some((f) => /^(public|site|docs)\/index\.html$/.test(f))) {
     const root = has('index.html') ? '.' : files.find((f) => /index\.html$/.test(f)).split('/')[0];
-    Object.assign(s, { kind: 'static', language: 'HTML/CSS/JS', framework: 'Static site', stack: 'static', containerPort: 80, image: 'nginx:1.27-alpine', spa: true, staticRoot: root });
+    Object.assign(s, { kind: 'static', language: 'HTML/CSS/JS', framework: 'Static site', stack: 'static', containerPort: 80, image: 'nginx:1.27-alpine', spa: true, staticRoot: root, indexFile: 'index.html' });
+  } else if (inferNodeProject(dir, files)) {
+    const inf = inferNodeProject(dir, files);
+    const fw = inf.deps.express ? 'Express' : inf.deps.fastify ? 'Fastify' : inf.deps.koa ? 'Koa' : 'Node.js';
+    Object.assign(s, { kind: 'node', language: 'Node.js', framework: `${fw} (package.json generated)`, stack: 'node', image: 'node:20-alpine',
+      containerPort: nodePort(dir, inf.entry) || 3000, fixedPort: !!nodePort(dir, inf.entry), entry: inf.entry, startScript: true, buildScript: false, generatedPackage: inf.pkg });
+  } else if (files.some((f) => /^[^/]+\.html?$/i.test(f))) {
+    const page = mainHtml(dir, files.filter((f) => /^[^/]+\.html?$/i.test(f)), hint);
+    Object.assign(s, { kind: 'static', language: 'HTML/CSS/JS', framework: 'Static site', stack: 'static', containerPort: 80, image: 'nginx:1.27-alpine', spa: true, staticRoot: '.', indexFile: page });
   } else {
     return null;
   }
@@ -81,7 +137,8 @@ function detect(dir, overrides = {}) {
 }
 
 /* ---------------- generated files ---------------- */
-const NGINX = 'server {\n  listen 80;\n  root /usr/share/nginx/html;\n  index index.html;\n  gzip on;\n  gzip_types text/css application/javascript application/json image/svg+xml;\n  location / { try_files $uri $uri/ $uri.html /index.html; }\n}\n';
+const nginxConf = (index = 'index.html') => `server {\n  listen 80;\n  root /usr/share/nginx/html;\n  index ${index} index.html;\n  gzip on;\n  gzip_types text/css application/javascript application/json image/svg+xml;\n  location / { try_files $uri $uri/ $uri.html /${index}; }\n}\n`;
+const NGINX = nginxConf();
 
 function dockerfile(s, o = {}) {
   const P = s.containerPort;
@@ -115,7 +172,8 @@ function generatedFiles(p, s, plan, ownDockerfileText) {
     'docker-compose.yml': `# Run "${p.name}" anywhere with: docker compose up -d --build\nservices:\n  ${p.slug}:\n    build: .\n    image: ${p.slug}:latest\n    restart: unless-stopped\n    ports:\n      - "${p.port}:${s.containerPort}"\n    environment:\n      PORT: "${s.containerPort}"\n    deploy:\n      resources:\n        limits:\n          cpus: "${plan.cpus}"\n          memory: ${plan.memory.toUpperCase()}\n    healthcheck:\n      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${s.containerPort}${p.overrides.healthPath || '/'} || exit 1"]\n      interval: 30s\n`,
     '.github/workflows/shipstack.yml': `# Generated by ShipStack for "${p.name}"\nname: ShipStack CI/CD\n\non:\n  push:\n    branches: [${branch}]\n  pull_request:\n\njobs:\n  test:\n    name: Automated tests\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n${testJob}\n\n  build:\n    name: Build container image\n    needs: test\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: docker/setup-buildx-action@v3\n      - run: docker build -t ${p.slug}:\${{ github.sha }} .\n\n  deploy:\n    name: Deploy with ShipStack\n    needs: build\n    if: github.event_name == 'push'\n    runs-on: ubuntu-latest\n    steps:\n      - run: curl -fsS -X POST "\${{ secrets.SHIPSTACK_DEPLOY_HOOK }}"\n`,
   };
-  if (s.spa && !s.ownDockerfile) f['shipstack-nginx.conf'] = NGINX;
+  if (s.spa && !s.ownDockerfile) f['shipstack-nginx.conf'] = nginxConf(s.indexFile);
+  if (s.generatedPackage) f['package.json'] = JSON.stringify(s.generatedPackage, null, 2) + '\n';
   return f;
 }
 
@@ -142,4 +200,4 @@ function secretScan(dir) {
   return found;
 }
 
-module.exports = { detect, dockerfile, generatedFiles, secretScan, NGINX, listFiles };
+module.exports = { detect, dockerfile, generatedFiles, secretScan, NGINX, nginxConf, listFiles };

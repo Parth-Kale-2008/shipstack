@@ -32,13 +32,14 @@ function rates(projectId) {
 
 function serveStatic(r, req, res) {
   const { dir, spa } = r.target;
+  const index = r.target.index || 'index.html';
   let rel;
   try { rel = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { rel = '/'; }
   let file = path.normalize(path.join(dir, rel));
   if (!file.startsWith(dir)) { res.writeHead(403); return res.end('Forbidden'); }
-  const tryFiles = [file, path.join(file, 'index.html'), file + '.html'];
+  const tryFiles = [file, path.join(file, index), path.join(file, 'index.html'), file + '.html'];
   const hit = tryFiles.find((f) => { try { return fs.statSync(f).isFile(); } catch { return false; } });
-  const target = hit || (spa ? path.join(dir, 'index.html') : null);
+  const target = hit || (spa ? path.join(dir, index) : null);
   if (!target || !fs.existsSync(target)) { record(r, 404); res.writeHead(404, { 'Content-Type': 'text/html' }); return res.end(page('404', 'Page not found', 404).html); }
   record(r, 200);
   res.writeHead(200, { 'Content-Type': MIME[path.extname(target).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-cache', 'X-Powered-By': 'ShipStack' });

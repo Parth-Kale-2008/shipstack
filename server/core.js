@@ -286,10 +286,10 @@ async function startRelease(p, d, release, stack, L = () => {}) {
     const up = await freePort(15000, 16000);
     return runtime.docker.start(p, d, release, up, env, plan, L);
   }
-  const up = release.staticDir ? null : await freePort(15000, 16000);
+  const up = release.staticDir ? null : stack && stack.fixedPort ? stack.containerPort : await freePort(15000, 16000);
   return runtime.native.start(p, d, release, up, env, plan, L, stack);
 }
-const targetFor = (h) => (h.type === 'static' ? { type: 'static', dir: h.dir, spa: h.spa } : { type: 'upstream', port: h.port });
+const targetFor = (h) => (h.type === 'static' ? { type: 'static', dir: h.dir, spa: h.spa, index: h.index } : { type: 'upstream', port: h.port });
 
 async function waitHealthy(p, h, L) {
   if (h.type === 'static') { L('Static files in place – HTTP 200', 'success'); return { code: 200, ms: 1 }; }
@@ -340,9 +340,15 @@ async function pipeline(p, d, target) {
 
       /* 2. detect & scan */
       setStage('scan', 'running');
-      stack = detect(src, p.overrides);
+      stack = detect(src, p.overrides, p.source.repoUrl ? p.source.repoUrl.split('/').pop() : p.name);
       if (!stack) throw fail('scan', 'Could not detect the project type. Add a Dockerfile, package.json, requirements.txt, go.mod or index.html (or set the root directory in Settings).');
       d.stackFull = stack;
+      if (stack.generatedPackage) {
+        fs.writeFileSync(path.join(src, 'package.json'), JSON.stringify(stack.generatedPackage, null, 2) + '\n');
+        L('scan')(`No package.json found, so one was generated from the code's require() lines: ${Object.keys(stack.generatedPackage.dependencies).join(', ') || 'no packages'}`, 'warn');
+      }
+      if (stack.indexFile && stack.indexFile !== 'index.html') L('scan')(`No index.html found, so ${stack.indexFile} is served as the home page`, 'warn');
+      if (stack.kind === 'node' && stack.containerPort !== 3000) L('scan')(`App listens on fixed port ${stack.containerPort} (process.env.PORT not used)`);
       d.stack = { language: stack.language, framework: stack.framework, stack: stack.stack, containerPort: stack.containerPort, ownDockerfile: stack.ownDockerfile };
       L('scan')(`Detected ${stack.framework} (${stack.language}) – ${stack.fileCount} files scanned`, 'success');
       L('scan')(`Container port ${stack.containerPort}${stack.tests ? ` · test command: ${stack.tests === 'pytest' ? 'python -m pytest -q' : stack.tests}` : ' · no test suite found'}`);
@@ -387,6 +393,7 @@ async function pipeline(p, d, target) {
 
     /* 5. deploy */
     setStage('deploy', 'running');
+    if (d.mode === 'native' && stack && stack.fixedPort && handles.get(p.id)) { await runtime.rt.stop(handles.get(p.id)); handles.delete(p.id); }
     newHandle = await startRelease(p, d, release, stack, L('deploy'));
     setStage('deploy', 'success', newHandle.type === 'docker' ? 'container started' : newHandle.type === 'static' ? 'files published' : 'process started');
 
