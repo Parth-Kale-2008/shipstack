@@ -95,9 +95,17 @@ function detect(dir, overrides = {}, hint = '') {
       const fw = deps.react || deps['react-scripts'] ? 'React' : deps.vue ? 'Vue' : deps['@angular/core'] ? 'Angular' : deps.svelte ? 'Svelte' : 'SPA';
       Object.assign(s, { kind: 'spa', framework: deps.vite ? `${fw} + Vite` : fw, stack: 'node-spa', containerPort: 80, spa: true });
     } else {
-      const entry = ['server.js', 'index.js', 'app.js', 'main.js', 'src/server.js', 'src/index.js', 'src/app.js'].find(has) || pkg.main || 'index.js';
+      let entry = ['server.js', 'index.js', 'app.js', 'main.js', 'src/server.js', 'src/index.js', 'src/app.js'].find(has) || pkg.main || 'index.js';
       const fw = deps.express ? 'Express' : deps.fastify ? 'Fastify' : deps.koa ? 'Koa' : deps['@nestjs/core'] ? 'NestJS' : 'Node.js';
-      Object.assign(s, { kind: 'node', framework: fw, stack: 'node', containerPort: nodePort(dir, entry) || 3000, fixedPort: !!nodePort(dir, entry), entry, startScript: !!scripts.start, buildScript: !!scripts.build });
+      // Common mistakes: "start": "nodemon x.js" (dev tool) or a start file that doesn't exist. Run the real file with node instead.
+      let startScript = !!scripts.start;
+      const sm = String(scripts.start || '').match(/^\s*(node|nodemon)\s+([\w./-]+?)(\.(?:c|m)?js)?\s*$/);
+      if (sm) {
+        const file = sm[2] + (sm[3] || '.js');
+        if (!has(file)) { s.startFix = `"start" runs ${file}, which isn't in the repo, so ShipStack runs ${entry} with node instead`; startScript = false; }
+        else if (sm[1] === 'nodemon') { s.startFix = `"start" uses nodemon (a development tool), so ShipStack runs ${file} with node instead`; startScript = false; entry = file; }
+      }
+      Object.assign(s, { kind: 'node', framework: fw, stack: 'node', containerPort: nodePort(dir, entry) || 3000, fixedPort: !!nodePort(dir, entry), entry, startScript, buildScript: !!scripts.build });
     }
   } else if (has('requirements.txt') || has('pyproject.toml') || has('Pipfile')) {
     const req = (readText(path.join(dir, 'requirements.txt')) + readText(path.join(dir, 'pyproject.toml'))).toLowerCase();

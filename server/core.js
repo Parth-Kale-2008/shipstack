@@ -347,6 +347,7 @@ async function pipeline(p, d, target) {
         fs.writeFileSync(path.join(src, 'package.json'), JSON.stringify(stack.generatedPackage, null, 2) + '\n');
         L('scan')(`No package.json found, so one was generated from the code's require() lines: ${Object.keys(stack.generatedPackage.dependencies).join(', ') || 'no packages'}`, 'warn');
       }
+      if (stack.startFix) L('scan')(stack.startFix, 'warn');
       if (stack.indexFile && stack.indexFile !== 'index.html') L('scan')(`No index.html found, so ${stack.indexFile} is served as the home page`, 'warn');
       if (stack.kind === 'node' && stack.containerPort !== 3000) L('scan')(`App listens on fixed port ${stack.containerPort} (process.env.PORT not used)`);
       d.stack = { language: stack.language, framework: stack.framework, stack: stack.stack, containerPort: stack.containerPort, ownDockerfile: stack.ownDockerfile };
