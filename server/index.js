@@ -67,7 +67,7 @@ function owned(user, pid) {
   return p;
 }
 const baseUrl = (req) => (process.env.SHIPSTACK_PUBLIC_URL || `http://${req.headers.host || `localhost:${PORT}`}`).replace(/\/$/, '');
-const MIME = { '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
+const MIME = { '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };
 
 /* ---------------- API ---------------- */
 async function api(req, res, url) {
@@ -354,7 +354,7 @@ function serveStatic(req, res, url) {
       return res.end(pg.html);
     }
     const ext = path.extname(file);
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': ext === '.png' ? 'public, max-age=86400' : 'no-cache' });
+    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': ['.png', '.ico', '.svg'].includes(ext) ? 'public, max-age=86400' : 'no-cache' });
     res.end(buf);
   });
 }
