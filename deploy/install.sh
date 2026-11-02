@@ -84,6 +84,10 @@ if [ -n "$EMAIL" ]; then sed -e "s/{{EMAIL}}/$EMAIL/" "$APP_DIR/deploy/Caddyfile
 systemctl enable caddy >/dev/null
 systemctl reload caddy || systemctl restart caddy
 
+step "Security hardening"
+bash "$APP_DIR/deploy/harden.sh"
+systemctl restart shipstack
+
 step "Pre-pulling base images (makes the first deploys faster)"
 for img in node:20-alpine python:3.12-slim nginx:1.27-alpine; do docker pull -q "$img" || true; done
 

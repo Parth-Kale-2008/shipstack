@@ -17,6 +17,10 @@ const PUB = path.join(ROOT, 'public');
 const LAN = lanIp();
 const MAX_ZIP = 250 * 1024 * 1024;
 const VERSION = require('../package.json').version;
+// Only our own scripts, styles and Google Fonts may load on platform pages; no framing, no form posts elsewhere.
+const CSP = ["default-src 'self'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com", "img-src 'self' data: https:", "connect-src 'self'", "object-src 'none'",
+  "frame-ancestors 'none'", "base-uri 'self'", "form-action 'self'"].join('; ');
 const SECURE = /^https:/.test(process.env.SHIPSTACK_PUBLIC_URL || '') ? '; Secure' : '';
 // Behind Caddy/nginx every request comes from 127.0.0.1, so read the client IP from X-Forwarded-For.
 const clientIp = (req) => (process.env.TRUST_PROXY === '1' && req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : req.socket.remoteAddress);
@@ -32,6 +36,20 @@ const currentUser = (req) => accounts.sessionUser(sessionToken(req));
 const setSession = (res, token) => res.setHeader('Set-Cookie', `ss_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${30 * 86400}${SECURE}`);
 const clearSession = (res) => res.setHeader('Set-Cookie', `ss_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${SECURE}`);
 const attempts = new Map(); // ip -> { n, until }
+const accountFails = new Map(); // email -> { n, until }: stops password guessing spread across many IPs
+function accountLocked(email) { const a = accountFails.get(email); return a && a.n >= 10 && a.until > Date.now(); }
+function accountFailed(email) { const a = accountFails.get(email) || { n: 0, until: 0 }; if (a.until < Date.now()) a.n = 0; a.n++; a.until = Date.now() + 15 * 60000; accountFails.set(email, a); }
+
+// Sliding-window limiter: limit('api:' + ip, 1200, 5 * 60000) → true when over the limit.
+const buckets = new Map();
+function limited(key, max, windowMs) {
+  const now = Date.now();
+  const arr = (buckets.get(key) || []).filter((t) => t > now - windowMs);
+  arr.push(now);
+  buckets.set(key, arr);
+  return arr.length > max;
+}
+setInterval(() => { const cut = Date.now() - 3600e3; for (const [k, v] of buckets) if (!v.length || v[v.length - 1] < cut) buckets.delete(k); }, 10 * 60000).unref();
 function throttled(ip) { const a = attempts.get(ip); return a && a.n >= 10 && a.until > Date.now(); }
 function failed(ip) { const a = attempts.get(ip) || { n: 0, until: 0 }; if (a.until < Date.now()) a.n = 0; a.n++; a.until = Date.now() + 15 * 60000; attempts.set(ip, a); }
 
@@ -86,6 +104,7 @@ async function api(req, res, url) {
     if (body.ref && proj.source.branch && body.ref !== `refs/heads/${proj.source.branch}`) return send(res, 200, { ok: true, skipped: `push to ${body.ref} ignored` });
     if (core.busy.has(proj.id)) return send(res, 409, { error: 'A deployment is already running' });
     core.addEvent(proj.id, 'info', `Deploy hook called${req.headers['x-github-event'] ? ' by GitHub (push)' : ''}`);
+    if (limited('hook:' + proj.id, 30, 3600e3)) return send(res, 429, { error: 'Too many deploy hooks for this project. Try again later.' });
     const d = core.createDeployment(proj, { trigger: req.headers['x-github-event'] ? 'git push' : 'webhook' });
     return send(res, 202, { ok: true, deployment: d.number });
   }
@@ -102,10 +121,13 @@ async function api(req, res, url) {
   if (p === '/api/auth/login' && method === 'POST') {
     if (throttled(ip)) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' });
     const b = await readJson(req);
+    const loginEmail = String(b.email || '').trim().toLowerCase();
+    if (accountLocked(loginEmail)) return send(res, 429, { error: 'Too many failed attempts on this account. Try again in 15 minutes.' });
     const user = db().users.find((u) => u.email === String(b.email || '').trim().toLowerCase());
-    if (!user || !accounts.checkPassword(String(b.password || ''), user.password)) { failed(ip); return send(res, 401, { error: 'Email or password is incorrect' }); }
+    if (!user || !accounts.checkPassword(String(b.password || ''), user.password)) { failed(ip); accountFailed(loginEmail); return send(res, 401, { error: 'Email or password is incorrect' }); }
     if (user.status === 'suspended') return send(res, 403, { error: 'This account has been suspended. Contact support if you think this is a mistake.' });
     attempts.delete(ip);
+    accountFails.delete(loginEmail);
     accounts.recordLogin(user, ip, ua);
     setSession(res, accounts.newSession(user, ip, ua));
     return send(res, 200, { user: accounts.publicUser(user), mustChangePassword: !!user.mustChangePassword });
@@ -171,6 +193,9 @@ async function api(req, res, url) {
 
   if (p === '/api/projects' && method === 'GET') {
     return send(res, 200, core.projects().filter((x) => x.ownerId === user.id).map((x) => core.view(x, false, baseUrl(req), LAN)).sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')));
+  }
+  if (method === 'POST' && (p === '/api/projects' || /\/(deploy|rollback|archive)(\/|$)/.test(p)) && !accounts.isAdmin(user) && limited('deploy:' + user.id, 30, 3600e3)) {
+    return send(res, 429, { error: 'You have started too many deployments in the last hour. Please wait a bit.' });
   }
   if (p === '/api/projects' && method === 'POST') {
     const { p: proj, d } = await core.createProject(user, await readJson(req), accounts.maxProjectsFor(user));
@@ -384,6 +409,14 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'same-origin');
+  res.setHeader('Content-Security-Policy', CSP);
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  if (req.url.startsWith('/api/') && !req.url.startsWith('/api/hooks/') && limited('api:' + clientIp(req), 1200, 5 * 60000)) {
+    res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
+    return res.end(JSON.stringify({ error: 'Too many requests. Slow down and try again in a minute.' }));
+  }
   const url = new URL(req.url, 'http://x');
   if (!url.pathname.startsWith('/api/')) return serveStatic(req, res, url);
   try { await api(req, res, url); } catch (e) {

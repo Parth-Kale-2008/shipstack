@@ -245,8 +245,13 @@ async function fetchSource(p, d, work, L, mask) {
     if (!exists(zip)) throw new Error('No ZIP uploaded yet – upload one from Settings');
     mkdirp(src);
     L(`Extracting ${p.source.fileName}`);
-    let r = await run('tar', ['-xf', zip, '-C', src]);
-    if (r.code !== 0) r = await run('unzip', ['-q', '-o', zip, '-d', src]);
+    // Refuse "ZIP bombs": archives that expand to an enormous size or file count.
+    const info = await run('unzip', ['-Z', '-t', zip]);
+    const m = info.out.match(/(\d+)\s+files?,\s+(\d+)\s+bytes uncompressed/);
+    if (m && (+m[1] > 20000 || +m[2] > 1024 * 1024 * 1024)) throw new Error(`ZIP is too large when unpacked (${m[1]} files, ${(+m[2] / 1048576).toFixed(0)} MB). The limit is 20,000 files and 1 GB`);
+    // unzip strips "../" and absolute paths, so files can't be written outside the project folder
+    let r = info.code === 0 ? await run('unzip', ['-q', '-o', zip, '-d', src]) : { code: 1 };
+    if (r.code !== 0) r = await run('tar', ['-xf', zip, '-C', src]);
     if (r.code !== 0) throw new Error('Could not extract the ZIP file');
     const entries = fs.readdirSync(src).filter((n) => !n.startsWith('__MACOSX'));
     if (entries.length === 1 && fs.statSync(path.join(src, entries[0])).isDirectory()) {
