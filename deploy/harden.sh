@@ -39,6 +39,8 @@ systemctl enable fail2ban >/dev/null 2>&1
 systemctl restart fail2ban
 
 step "Container isolation rules (re-applied whenever Docker starts)"
+echo br_netfilter > /etc/modules-load.d/shipstack.conf
+echo 'net.bridge.bridge-nf-call-iptables = 1' > /etc/sysctl.d/90-shipstack.conf
 install -m 755 "$HERE/container-firewall.sh" /usr/local/sbin/shipstack-container-firewall
 cat > /etc/systemd/system/shipstack-firewall.service <<'EOF'
 [Unit]
