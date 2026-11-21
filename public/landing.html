@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Shipzo – Deploy your web project in one click | ShipStack</title>
-<meta name="description" content="Shipzo runs ShipStack, a DevOps deployment platform for students and small teams. Paste a GitHub repo and get automated tests, a Docker container, HTTPS and a live link, with monitoring and auto-healing. Free beta.">
-<meta name="keywords" content="Shipzo, ShipStack, deploy website, deploy github repo, free hosting for students, CI/CD, Docker, DevOps platform, India">
+<title>Shipzo – Free Web App Hosting &amp; One-Click Deploy from GitHub</title>
+<meta name="description" content="Deploy web apps from GitHub in one click. Free hosting for students and small teams with automatic tests, Docker, HTTPS on your own subdomain, monitoring and rollback.">
+<meta name="keywords" content="Shipzo, ShipStack, deploy website, deploy web app, deploy from GitHub, free web hosting, free hosting for students, host college project, deploy Flask, deploy Django, deploy React, deploy Node.js, Docker hosting, CI/CD, India">
 <link rel="canonical" href="https://shipzo.tech/">
 <meta name="theme-color" content="#0b0d11">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Shipzo">
-<meta property="og:title" content="Shipzo – Deploy your web project in one click">
+<meta property="og:title" content="Shipzo – Free web app hosting, deployed from GitHub in one click">
 <meta property="og:description" content="Paste a GitHub repo. Get tests, a Docker container, HTTPS and a live link at your-app.shipzo.tech. Free beta for students and small teams.">
 <meta property="og:url" content="https://shipzo.tech/">
 <meta property="og:image" content="https://shipzo.tech/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Shipzo – Deploy your web project in one click">
+<meta name="twitter:title" content="Shipzo – Free web app hosting, deployed from GitHub in one click">
 <meta name="twitter:description" content="Tests, containers, HTTPS and monitoring for small web projects. Free beta.">
 <meta name="twitter:image" content="https://shipzo.tech/og.png">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
@@ -27,6 +27,12 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"ShipStack by Shipzo","url":"https://shipzo.tech/","applicationCategory":"DeveloperApplication","operatingSystem":"Web","description":"DevOps deployment platform for small web projects: automated CI/CD, testing, Docker containerization, HTTPS hosting, monitoring and auto-healing.","offers":{"@type":"Offer","price":"0","priceCurrency":"INR"},"creator":{"@type":"Organization","name":"Shipzo – MIT ADT University, Pune"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"Shipzo","alternateName":["ShipStack","shipzo.tech"],"url":"https://shipzo.tech/"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"Shipzo","url":"https://shipzo.tech/","logo":"https://shipzo.tech/icon-512.png","sameAs":["https://github.com/Parth-Kale-2008/shipstack"]}
 </script>
 <style>
 /* Layout: one long dark page; sticky nav, hero with a live pipeline console, then process → features → stacks → plans → team → FAQ. */
@@ -108,8 +114,10 @@ section{padding-block:80px}
 .feat .ic svg{width:20px;height:20px}
 .feat h3{font-size:18px;margin-bottom:8px}
 .feat p{font-size:14.5px;color:var(--muted)}
+.stacks a{color:var(--text);text-decoration:none}.stacks a:hover{border-color:var(--brand);color:var(--brand2)}
+a.feat{display:block;color:inherit;text-decoration:none;transition:border-color .15s}a.feat:hover{border-color:var(--brand)}a.feat .go{display:inline-block;margin-top:10px;font-size:13px;color:var(--brand2)}
 .stacks{display:flex;flex-wrap:wrap;gap:10px}
-.stacks span{padding:9px 14px;border:1px solid var(--line2);border-radius:10px;background:var(--panel);font:500 14px var(--mono)}
+.stacks span,.stacks a{padding:9px 14px;border:1px solid var(--line2);border-radius:10px;background:var(--panel);font:500 14px var(--mono)}
 .url-demo{margin-top:28px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:14px;color:var(--muted)}
 .url-demo code{font-family:var(--mono);color:var(--ok);background:var(--panel);border:1px solid var(--line);padding:6px 10px;border-radius:8px}
 .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -164,7 +172,7 @@ footer a:hover{color:var(--text)}
 <header class="nav">
   <div class="wrap">
     <a class="brand" href="/" aria-label="Shipzo home"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
-    <nav aria-label="Sections"><a href="#how">How it works</a><a href="#features">Features</a><a href="#stacks">Stacks</a><a href="#plans">Plans</a><a href="#team">Team</a><a href="/guides">Guides</a><a href="#faq">FAQ</a></nav>
+    <nav aria-label="Sections"><a href="#how">How it works</a><a href="#features">Features</a><a href="#stacks">Stacks</a><a href="#plans">Plans</a><a href="#team">Team</a><a href="#guides">Guides</a><a href="#faq">FAQ</a></nav>
     <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
   </div>
 </header>
@@ -222,7 +230,7 @@ footer a:hover{color:var(--text)}
   <section id="stacks" class="alt">
     <div class="wrap">
       <div class="sec-head"><div class="eyebrow">Supported stacks</div><h2>Detected automatically</h2><p class="muted">No config files to write. If your repo has its own Dockerfile, ShipStack uses it.</p></div>
-      <div class="stacks"><span>Static HTML</span><span>React</span><span>Vite</span><span>Vue</span><span>Angular</span><span>Next.js</span><span>Node.js</span><span>Express</span><span>Flask</span><span>FastAPI</span><span>Django</span><span>Streamlit</span><span>Go</span><span>Dockerfile</span></div>
+      <div class="stacks"><a href="/guides/host-html-css-website-free" title="How to deploy Static HTML on Shipzo">Static HTML</a><a href="/guides/deploy-react-vite-app" title="How to deploy React on Shipzo">React</a><a href="/guides/deploy-react-vite-app" title="How to deploy Vite on Shipzo">Vite</a><a href="/guides/deploy-react-vite-app" title="How to deploy Vue on Shipzo">Vue</a><a href="/guides/deploy-react-vite-app" title="How to deploy Angular on Shipzo">Angular</a><a href="/guides/deploy-nextjs-app-free" title="How to deploy Next.js on Shipzo">Next.js</a><a href="/guides/deploy-node-express-app-free" title="How to deploy Node.js on Shipzo">Node.js</a><a href="/guides/deploy-node-express-app-free" title="How to deploy Express on Shipzo">Express</a><a href="/guides/deploy-flask-app-free" title="How to deploy Flask on Shipzo">Flask</a><a href="/guides/deploy-fastapi-app-free" title="How to deploy FastAPI on Shipzo">FastAPI</a><a href="/guides/deploy-django-app-free" title="How to deploy Django on Shipzo">Django</a><a href="/guides/host-streamlit-app-free" title="How to deploy Streamlit on Shipzo">Streamlit</a><span>Go</span><a href="/guides/deploy-docker-app-free" title="How to deploy Dockerfile on Shipzo">Dockerfile</a></div>
       <div class="url-demo">Your project goes live at <code>https://your-project.shipzo.tech</code> — for example <a href="https://houseprice-predictor.shipzo.tech"><code>houseprice-predictor.shipzo.tech</code></a></div>
     </div>
   </section>
@@ -252,7 +260,23 @@ footer a:hover{color:var(--text)}
     </div>
   </section>
 
-  <section id="faq">
+  <section id="guides">
+    <div class="wrap">
+      <div class="sec-head"><div class="eyebrow">Guides</div><h2>How to deploy your project</h2><p class="muted">Step-by-step guides for the stacks students and small teams use most, with fixes for the errors everyone hits. <a href="/guides" style="color:var(--brand2)">See all guides</a>.</p></div>
+      <div class="features">
+        <a class="feat" href="/guides/deploy-website-from-github"><h3>Deploy a website from GitHub</h3><p>Paste a repo link and get a live HTTPS site that redeploys on every push.</p><span class="go">Read the guide →</span></a>
+        <a class="feat" href="/guides/deploy-flask-app-free"><h3>Deploy Flask</h3><p>Get a Python Flask app online with gunicorn and a free HTTPS link.</p><span class="go">Read the guide →</span></a>
+        <a class="feat" href="/guides/deploy-django-app-free"><h3>Deploy Django</h3><p>Settings, static files, migrations and a hosted database, done right.</p><span class="go">Read the guide →</span></a>
+        <a class="feat" href="/guides/deploy-react-vite-app"><h3>Deploy React (Vite)</h3><p>Build to static files and fix blank pages and 404s on refresh.</p><span class="go">Read the guide →</span></a>
+        <a class="feat" href="/guides/deploy-node-express-app-free"><h3>Deploy Node.js &amp; Express</h3><p>Listen on the right port and connect MongoDB Atlas.</p><span class="go">Read the guide →</span></a>
+        <a class="feat" href="/guides/deploy-mern-stack-app-free"><h3>Deploy MERN stack</h3><p>Deploy the Express API and the React front end as two projects.</p><span class="go">Read the guide →</span></a>
+        <a class="feat" href="/guides/host-streamlit-app-free"><h3>Host a Streamlit ML app</h3><p>Put a machine-learning demo online with a shareable link.</p><span class="go">Read the guide →</span></a>
+        <a class="feat" href="/guides/host-college-project-online"><h3>Host a college project</h3><p>A live link for your PBL, mini-project or viva, even without Git.</p><span class="go">Read the guide →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="alt">
     <div class="wrap">
       <div class="sec-head"><div class="eyebrow">FAQ</div><h2>Questions</h2></div>
       <div class="faq">
@@ -266,7 +290,7 @@ footer a:hover{color:var(--text)}
     </div>
   </section>
 
-  <section class="final alt">
+  <section class="final">
     <div class="wrap">
       <h2>Your project, live in minutes.</h2>
       <p class="muted">Create a free account and deploy from GitHub, a ZIP file or a template.</p>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Free Docker Hosting: Deploy a Dockerfile with HTTPS (2026)</title>
+<meta name="description" content="Deploy any app with a Dockerfile and get a live HTTPS URL: how the port is chosen, resource limits, small multi-stage images and what isn&#x27;t supported.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-docker-app-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="Free Docker Hosting: Deploy a Dockerfile with HTTPS (2026)">
+<meta property="og:description" content="Deploy any app with a Dockerfile and get a live HTTPS URL: how the port is chosen, resource limits, small multi-stage images and what isn&#x27;t supported.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-docker-app-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Free Docker Hosting: Deploy a Dockerfile with HTTPS (2026)", "description": "Deploy any app with a Dockerfile and get a live HTTPS URL: how the port is chosen, resource limits, small multi-stage images and what isn't supported.", "url": "https://shipzo.tech/guides/deploy-docker-app-free", "datePublished": "2026-11-21", "dateModified": "2026-11-21", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a Docker container for free", "item": "https://shipzo.tech/guides/deploy-docker-app-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I use docker-compose?", "acceptedAnswer": {"@type": "Answer", "text": "Not with several services in one project. Deploy each service as a separate project and connect them over HTTPS."}}, {"@type": "Question", "name": "Will Shipzo use my Dockerfile or its own?", "acceptedAnswer": {"@type": "Answer", "text": "Yours, if the repository has one. Tick Ignore repository Dockerfile in Settings to use the generated one instead."}}, {"@type": "Question", "name": "Can I deploy Java, PHP, Ruby or Rust apps?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, through a Dockerfile, as long as the app answers HTTP requests on the exposed port."}}, {"@type": "Question", "name": "Is Docker hosting free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, during the beta, with up to 3 projects per account and no card."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / Docker · Any language</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a Docker container for free</h1>
+      <div class="meta"><span>Docker · Any language</span><span>7 min read</span><span>Updated 21 November 2026</span></div>
+      <p class="lede">If your project has a Dockerfile, the host doesn't need to understand your framework. Shipzo builds the image exactly as written and runs it with HTTPS, monitoring and rollback. Ruby, Rust, Java, PHP or .NET: if it runs in a container and answers HTTP requests, it can be deployed.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Keep the <code>Dockerfile</code> at the top of the repository, or of the root directory you choose.</li><li><code>EXPOSE</code> the port your app listens on. Shipzo also passes that number in the <code>PORT</code> variable.</li><li>Listen on <code>0.0.0.0</code>, not <code>localhost</code>.</li><li>Use a multi-stage build and a <code>.dockerignore</code> to keep the image small.</li></ol></div>
+      
+<h2 id="how">How Shipzo uses your Dockerfile</h2>
+<ul>
+<li>The image is built exactly as written. Shipzo doesn't change your Dockerfile.</li>
+<li>The port comes from the first <code>EXPOSE</code> line (3000 if there is none). The same number is passed to the container as the <code>PORT</code> environment variable.</li>
+<li>The container runs with your plan's memory and CPU limits, a cap of 256 processes and no extra privileges. It is reachable only through <code>https://your-app.shipzo.tech</code>.</li>
+<li>There is no separate test stage for Dockerfile projects. Run your tests inside the Dockerfile instead; if a <code>RUN</code> step fails, the build stops and the live version keeps running.</li>
+</ul>
+
+<h2 id="example">An example Dockerfile</h2>
+<p>A multi-stage build compiles and tests in one image, then copies only what is needed into a small final image:</p>
+<p class="file">Dockerfile</p>
+<pre><code># 1. build and test
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build &amp;&amp; npm test
+
+# 2. small runtime image
+FROM node:20-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/package*.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/dist ./dist
+EXPOSE 8080
+CMD ["node", "dist/server.js"]</code></pre>
+<p>Inside the app, read the port with something like <code>process.env.PORT || 8080</code> and listen on <code>0.0.0.0</code>. Add a <code>.dockerignore</code> so local junk doesn't end up in the image:</p>
+<p class="file">.dockerignore</p>
+<pre><code>node_modules
+.git
+.env
+*.log</code></pre>
+
+<h2 id="limits">Resource limits by plan</h2>
+<div class="tbl"><table><thead><tr><th>Plan</th><th>Memory</th><th>CPU</th></tr></thead><tbody>
+<tr><td>Starter</td><td>256 MB</td><td>0.5 vCPU</td></tr>
+<tr><td>Standard</td><td>512 MB</td><td>1 vCPU</td></tr>
+<tr><td>Pro</td><td>1 GB</td><td>2 vCPU</td></tr>
+</tbody></table></div>
+<p>All plans are free during the beta. Images are built on the server, and the last five successful images are kept so you can roll back without rebuilding, which is one more reason to keep them small.</p>
+
+<h2 id="not-supported">What isn't supported</h2>
+<ul>
+<li><b>docker-compose with several services.</b> Each Shipzo project runs one container. Deploy each service as its own project and use a hosted database.</li>
+<li><b>Volumes.</b> The filesystem starts fresh on every deploy, so store data in a database or object storage.</li>
+<li><b>Privileged containers, host networking or fixed host ports.</b></li>
+</ul>
+
+<h2 id="other-way">Going the other way</h2>
+<p>For projects without a Dockerfile, Shipzo writes one for you. Open the <b>DevOps files</b> tab to see it, together with a <code>docker-compose.yml</code> and a GitHub Actions workflow. Commit them if you want to run the same container anywhere else. If your repository has a Dockerfile but you'd rather use Shipzo's, tick <b>Ignore repository Dockerfile</b> in Settings.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Fix</th></tr></thead><tbody>
+<tr><td>Health check timed out</td><td>The <code>EXPOSE</code> port doesn't match the port the app listens on, or the app binds to <code>localhost</code>.</td></tr>
+<tr><td>Container keeps restarting</td><td>It is running out of memory. Choose a bigger plan or reduce memory use.</td></tr>
+<tr><td>Build fails at a <code>RUN</code> step</td><td>Open the build log; the failing command and its output are shown there.</td></tr>
+<tr><td><code>permission denied</code> when binding to port 80</td><td>Non-root users can't use ports below 1024. Listen on 8080 and <code>EXPOSE 8080</code>.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Can I use docker-compose?</summary><p>Not with several services in one project. Deploy each service as a separate project and connect them over HTTPS.</p></details><details><summary>Will Shipzo use my Dockerfile or its own?</summary><p>Yours, if the repository has one. Tick Ignore repository Dockerfile in Settings to use the generated one instead.</p></details><details><summary>Can I deploy Java, PHP, Ruby or Rust apps?</summary><p>Yes, through a Dockerfile, as long as the app answers HTTP requests on the exposed port.</p></details><details><summary>Is Docker hosting free?</summary><p>Yes, during the beta, with up to 3 projects per account and no card.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-website-from-github"><span>GitHub · Any stack</span><b>How to deploy a website from GitHub for free</b><p>Turn a GitHub repository into a live HTTPS website in minutes. Public or private repos, branches, sub-folders, auto-deploy on…</p></a><a class="card" href="/guides/deploy-node-express-app-free"><span>JavaScript · Node.js · Express</span><b>How to deploy a Node.js Express app for free</b><p>Deploy a Node.js Express API or website for free: listen on process.env.PORT, set a start script, connect MongoDB Atlas with…</p></a><a class="card" href="/guides/deploy-fastapi-app-free"><span>Python · FastAPI</span><b>How to deploy a FastAPI app for free</b><p>Deploy a FastAPI backend for free with a live HTTPS URL: main.py and requirements.txt, uvicorn, CORS for your front end, and…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#how">How Shipzo uses your Dockerfile</a><a href="#example">An example Dockerfile</a><a href="#limits">Resource limits by plan</a><a href="#not-supported">What isn't supported</a><a href="#other-way">Going the other way</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

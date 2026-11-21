@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Deploy a Website from GitHub for Free (HTTPS Link, 2026)</title>
+<meta name="description" content="Turn a GitHub repository into a live HTTPS website in minutes. Public or private repos, branches, sub-folders, auto-deploy on every push, webhooks and rollback.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-website-from-github">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="Deploy a Website from GitHub for Free (HTTPS Link, 2026)">
+<meta property="og:description" content="Turn a GitHub repository into a live HTTPS website in minutes. Public or private repos, branches, sub-folders, auto-deploy on every push, webhooks and rollback.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-website-from-github">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Deploy a Website from GitHub for Free (HTTPS Link, 2026)", "description": "Turn a GitHub repository into a live HTTPS website in minutes. Public or private repos, branches, sub-folders, auto-deploy on every push, webhooks and rollback.", "url": "https://shipzo.tech/guides/deploy-website-from-github", "datePublished": "2026-11-21", "dateModified": "2026-11-21", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a website from GitHub for free", "item": "https://shipzo.tech/guides/deploy-website-from-github"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Isn't GitHub Pages enough?", "acceptedAnswer": {"@type": "Answer", "text": "For a site made only of HTML, CSS and JavaScript, GitHub Pages works. As soon as the project has server code, such as Flask, Express, Django or an API, it needs a host that runs it."}}, {"@type": "Question", "name": "Can I deploy just one folder of my repository?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Put the folder in Root directory when you create the project, or paste a GitHub link that points at that folder."}}, {"@type": "Question", "name": "Does it work with GitLab or Bitbucket?", "acceptedAnswer": {"@type": "Answer", "text": "Shipzo clones from GitHub. For code hosted elsewhere, download it as a ZIP and use Upload ZIP instead."}}, {"@type": "Question", "name": "Is it free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Shipzo is free during the beta, with up to 3 projects per account and no card required."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / GitHub · Any stack</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a website from GitHub for free</h1>
+      <div class="meta"><span>GitHub · Any stack</span><span>7 min read</span><span>Updated 21 November 2026</span></div>
+      <p class="lede">GitHub keeps your code safe, but it doesn't run it. GitHub Pages can serve plain HTML files, and that's where it stops: no Flask, no Express, no database calls. To get a real app online you need something that pulls the repository, builds it and keeps it running. Here's the whole path on Shipzo, from the repo link to automatic redeploys.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Push your project to GitHub (public, or private with a read-only token).</li><li>Paste the repository link into Shipzo. It works out the stack, runs your tests and builds a container.</li><li>The site goes live at <code>https://your-project.shipzo.tech</code>.</li><li>Every later <code>git push</code> redeploys it within about a minute, and a broken commit never replaces the working version.</li></ol></div>
+      
+<h2 id="what-works">What kind of repository works</h2>
+<p>You don't write a config file. Shipzo looks at the files in your repository and decides how to build it:</p>
+<div class="tbl"><table><thead><tr><th>If the repo has…</th><th>It is deployed as</th></tr></thead><tbody>
+<tr><td><code>Dockerfile</code></td><td>Your own container, built exactly as written</td></tr>
+<tr><td><code>package.json</code> with <code>next</code></td><td>A Next.js server (server-side rendering works)</td></tr>
+<tr><td><code>package.json</code> with a build script (React, Vite, Vue, Angular, Svelte)</td><td>A static site served by nginx</td></tr>
+<tr><td><code>package.json</code> with Express, Fastify, Koa or NestJS</td><td>A Node.js server</td></tr>
+<tr><td><code>requirements.txt</code> plus <code>manage.py</code></td><td>Django, run with gunicorn</td></tr>
+<tr><td><code>requirements.txt</code> naming <code>fastapi</code> or <code>streamlit</code></td><td>FastAPI with uvicorn, or Streamlit</td></tr>
+<tr><td>Any other <code>requirements.txt</code></td><td>Flask or another WSGI app, run with gunicorn</td></tr>
+<tr><td><code>go.mod</code></td><td>A compiled Go server</td></tr>
+<tr><td><code>index.html</code> and no server code</td><td>A static website</td></tr>
+</tbody></table></div>
+<div class="note"><b>One rule for server apps:</b> listen on <code>0.0.0.0</code> and on the port given in the <code>PORT</code> environment variable. Most frameworks do this already. A hard-coded <code>localhost:5000</code> is the most common reason a deploy fails its health check.</div>
+
+<h2 id="link">Step 1: Paste the repository link</h2>
+<ol>
+<li><a href="/signup">Create a free Shipzo account</a> and open <b>New deployment</b>.</li>
+<li>Paste the link. Any of these work: <code>https://github.com/you/my-app</code>, <code>you/my-app</code>, or a link to a folder such as <code>https://github.com/you/my-app/tree/main/frontend</code>.</li>
+<li>Leave <b>Branch</b> empty to use the default branch, or type another one (for example <code>dev</code>).</li>
+<li>If the app lives in a sub-folder of a bigger repository, put that folder in <b>Root directory</b>, for example <code>backend/</code>.</li>
+</ol>
+<p>The project name becomes your address, so a project called <code>library-system</code> ends up at <code>https://library-system.shipzo.tech</code>.</p>
+
+<h2 id="private">Private repositories</h2>
+<p>For a private repo, Shipzo needs a token that can read it. Create a fine-grained token on GitHub:</p>
+<ol>
+<li>GitHub → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+<li>Under <b>Repository access</b>, choose <b>Only select repositories</b> and pick the one you are deploying.</li>
+<li>Under <b>Permissions</b>, set <b>Contents</b> to <b>Read-only</b>. Nothing else is needed.</li>
+</ol>
+<p>Paste the token into the <b>Private repository?</b> field of the form. It is masked in every log, and because it can only read one repository, it can't be used to change your code.</p>
+
+<h2 id="pipeline">Step 2: What happens when you press Deploy</h2>
+<div class="tbl"><table><thead><tr><th>Stage</th><th>What it does</th></tr></thead><tbody>
+<tr><td>Fetch source</td><td>Makes a shallow clone of your branch and notes the commit</td></tr>
+<tr><td>Detect &amp; scan</td><td>Picks the stack and warns about committed secrets such as <code>.env</code> files, private keys or API keys</td></tr>
+<tr><td>Test</td><td>Runs <code>npm test</code>, <code>pytest</code> or <code>go test</code> in a clean container if you have tests; a failure stops the release</td></tr>
+<tr><td>Build</td><td>Uses your Dockerfile, or writes one for your stack, and builds the image</td></tr>
+<tr><td>Deploy</td><td>Starts the new version next to the old one, with your plan's memory and CPU limits</td></tr>
+<tr><td>Health check</td><td>Sends requests for up to 120 seconds until the app answers</td></tr>
+<tr><td>Go live</td><td>Moves traffic to the new version and stops the old one</td></tr>
+</tbody></table></div>
+<p>You can watch each stage and the full build log live on the project page.</p>
+
+<h2 id="auto-deploy">Step 3: Redeploy automatically on every push</h2>
+<p>Continuous deployment is on by default. Shipzo checks your branch every 60 seconds and deploys any new commit, so you don't have to set anything up. If a commit fails its tests, it isn't retried over and over; push a fix and the new commit is picked up.</p>
+<p>If you'd rather not wait up to a minute, add a webhook:</p>
+<ol>
+<li>In Shipzo, open the project → <b>Settings</b> → <b>Deploy hook &amp; GitHub webhook</b>, and copy the hook URL.</li>
+<li>In GitHub, open the repo → <b>Settings</b> → <b>Webhooks</b> → <b>Add webhook</b>.</li>
+<li>Paste the URL as <b>Payload URL</b>, choose <code>application/json</code> as the content type and <b>Just the push event</b>.</li>
+</ol>
+<p>A third option: the <b>DevOps files</b> tab contains a GitHub Actions workflow written for your project. Commit it as <code>.github/workflows/shipstack.yml</code> and your tests also run on GitHub for every pull request.</p>
+
+<h2 id="rollback">When a deploy goes wrong</h2>
+<p>A new version only receives traffic after it passes its tests and health check. If either fails, the previous version keeps serving and the dashboard tells you why. If something slips through and the new version misbehaves, open <b>Deployments</b> and roll back to any of the last five successful releases. Rollbacks reuse the image that was already built, so they take seconds.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Fix</th></tr></thead><tbody>
+<tr><td>Repository can't be cloned</td><td>Check the link. If the repo is private, add a read-only token.</td></tr>
+<tr><td>The stack isn't recognised</td><td>Add the file Shipzo looks for (see the table above), or add a Dockerfile.</td></tr>
+<tr><td>Health check timed out</td><td>The app listens on <code>localhost</code> or a fixed port. Use <code>0.0.0.0</code> and <code>PORT</code>, or set <b>App port</b> in Settings.</td></tr>
+<tr><td>A push didn't redeploy</td><td>Check that <b>Continuous deployment</b> is on and that you pushed to the branch the project uses.</td></tr>
+<tr><td>The wrong folder was deployed</td><td>Set <b>Root directory</b> to the folder that holds your app.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Isn&#x27;t GitHub Pages enough?</summary><p>For a site made only of HTML, CSS and JavaScript, GitHub Pages works. As soon as the project has server code, such as Flask, Express, Django or an API, it needs a host that runs it.</p></details><details><summary>Can I deploy just one folder of my repository?</summary><p>Yes. Put the folder in Root directory when you create the project, or paste a GitHub link that points at that folder.</p></details><details><summary>Does it work with GitLab or Bitbucket?</summary><p>Shipzo clones from GitHub. For code hosted elsewhere, download it as a ZIP and use Upload ZIP instead.</p></details><details><summary>Is it free?</summary><p>Yes. Shipzo is free during the beta, with up to 3 projects per account and no card required.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/host-html-css-website-free"><span>HTML · CSS · JavaScript</span><b>How to host an HTML, CSS and JavaScript website for free</b><p>Put an HTML, CSS and JavaScript website or portfolio online free with HTTPS: folder structure, relative paths, clean URLs, ZIP…</p></a><a class="card" href="/guides/deploy-docker-app-free"><span>Docker · Any language</span><b>How to deploy a Docker container for free</b><p>Deploy any app with a Dockerfile and get a live HTTPS URL: how the port is chosen, resource limits, small multi-stage images and…</p></a><a class="card" href="/guides/deploy-node-express-app-free"><span>JavaScript · Node.js · Express</span><b>How to deploy a Node.js Express app for free</b><p>Deploy a Node.js Express API or website for free: listen on process.env.PORT, set a start script, connect MongoDB Atlas with…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#what-works">What kind of repository works</a><a href="#link">Step 1: Paste the repository link</a><a href="#private">Private repositories</a><a href="#pipeline">Step 2: What happens when you press Deploy</a><a href="#auto-deploy">Step 3: Redeploy automatically on every push</a><a href="#rollback">When a deploy goes wrong</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

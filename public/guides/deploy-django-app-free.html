@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Deploy a Django App for Free (Step-by-Step, 2026)</title>
+<meta name="description" content="Deploy a Django project online for free with HTTPS: ALLOWED_HOSTS and CSRF settings, static files with WhiteNoise, migrations and a free PostgreSQL database.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-django-app-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Deploy a Django App for Free (Step-by-Step, 2026)">
+<meta property="og:description" content="Deploy a Django project online for free with HTTPS: ALLOWED_HOSTS and CSRF settings, static files with WhiteNoise, migrations and a free PostgreSQL database.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-django-app-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Deploy a Django App for Free (Step-by-Step, 2026)", "description": "Deploy a Django project online for free with HTTPS: ALLOWED_HOSTS and CSRF settings, static files with WhiteNoise, migrations and a free PostgreSQL database.", "url": "https://shipzo.tech/guides/deploy-django-app-free", "datePublished": "2026-11-21", "dateModified": "2026-11-21", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a Django app for free", "item": "https://shipzo.tech/guides/deploy-django-app-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I need a Procfile or Dockerfile?", "acceptedAnswer": {"@type": "Answer", "text": "No. Shipzo detects Django from manage.py and writes the Dockerfile itself. You can see it in the DevOps files tab."}}, {"@type": "Question", "name": "Can I deploy Django REST Framework APIs?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The steps are the same; an API project usually doesn't even need WhiteNoise unless it uses the browsable API or the admin."}}, {"@type": "Question", "name": "Can I use MySQL instead of PostgreSQL?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, any hosted database that dj-database-url understands works. Add the matching driver to requirements.txt. Free PostgreSQL from Neon or Supabase is the easiest option."}}, {"@type": "Question", "name": "Will my site go to sleep when nobody visits?", "acceptedAnswer": {"@type": "Answer", "text": "No. Apps on Shipzo keep running, so the first visitor doesn't wait for a cold start."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / Python · Django</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a Django app for free</h1>
+      <div class="meta"><span>Python · Django</span><span>9 min read</span><span>Updated 21 November 2026</span></div>
+      <p class="lede">Django runs happily with <code>python manage.py runserver</code> on your laptop. On a real server, four things change: the allowed hosts, the static files, the database and the migrations. Sort those out once and every deploy after that is a <code>git push</code>.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Read <code>SECRET_KEY</code>, <code>DEBUG</code> and <code>DATABASE_URL</code> from environment variables.</li><li>Add <code>.shipzo.tech</code> to <code>ALLOWED_HOSTS</code> and <code>https://*.shipzo.tech</code> to <code>CSRF_TRUSTED_ORIGINS</code>.</li><li>Serve static files with WhiteNoise. Shipzo runs <code>collectstatic</code> during the build.</li><li>Set the start command so migrations run before gunicorn starts.</li></ol></div>
+      
+<h2 id="how">How Shipzo runs a Django project</h2>
+<p>Shipzo recognises Django when it finds <code>manage.py</code> next to <code>requirements.txt</code>. It locates the <code>wsgi.py</code> inside your project folder (for example <code>mysite/wsgi.py</code>), runs <code>python manage.py collectstatic --noinput</code> while building the container, and starts <code>gunicorn mysite.wsgi:application</code> with two workers on Python 3.12. You don't need a Procfile or a Dockerfile.</p>
+<pre><code>my-django-project/
+├── manage.py
+├── requirements.txt
+├── mysite/
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+└── blog/               # your apps</code></pre>
+
+<h2 id="settings">Step 1: Production settings</h2>
+<p>These are the lines that usually need changing in <code>settings.py</code>:</p>
+<p class="file">mysite/settings.py</p>
+<pre><code>import os
+from pathlib import Path
+import dj_database_url
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
+DEBUG = os.environ.get("DEBUG", "False") == "True"
+ALLOWED_HOSTS = [".shipzo.tech", "localhost", "127.0.0.1"]
+CSRF_TRUSTED_ORIGINS = ["https://*.shipzo.tech"]
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # ... the rest of your middleware stays as it was
+]
+
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+DATABASES = {
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}", conn_max_age=600
+    )
+}</code></pre>
+<p>WhiteNoise lets gunicorn serve your CSS, JavaScript and the admin's styles. Without it, the site loads but looks unstyled, because Django doesn't serve static files when <code>DEBUG</code> is off.</p>
+<div class="note"><b>Don't turn on <code>SECURE_SSL_REDIRECT</code>.</b> Shipzo already serves your app over HTTPS and passes requests to it internally over plain HTTP. With that setting on, Django keeps redirecting to HTTPS and the browser ends up in a redirect loop.</div>
+<p class="file">requirements.txt</p>
+<pre><code>Django&gt;=5.0,&lt;6
+gunicorn&gt;=22
+whitenoise&gt;=6.6
+dj-database-url&gt;=2.1
+psycopg[binary]&gt;=3.1</code></pre>
+
+<h2 id="database">Step 2: Use a hosted database</h2>
+<p>Every deploy starts from a fresh container, so a <code>db.sqlite3</code> file inside the project is reset each time and anything users saved is lost. Use a free hosted PostgreSQL database instead, such as Neon or Supabase:</p>
+<ol>
+<li>Create a database and copy its connection string (it starts with <code>postgresql://</code>).</li>
+<li>In Shipzo, open <b>Settings</b> → <b>Environment variables</b> and add <code>DATABASE_URL=postgresql://...</code>.</li>
+<li>Add a real secret key as well. Generate one with <code>python -c "import secrets; print(secrets.token_urlsafe(50))"</code> and save it as <code>SECRET_KEY</code>.</li>
+</ol>
+<p>Variable values are injected when the app starts and masked in every log.</p>
+
+<h2 id="migrations">Step 3: Run migrations on every deploy</h2>
+<p>Shipzo doesn't run <code>migrate</code> on its own, so add it to the start command. Open <b>Settings</b> → <b>Build &amp; runtime overrides</b> and set <b>Start command</b> to:</p>
+<pre><code>python manage.py migrate --noinput &amp;&amp; gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT --workers 2</code></pre>
+<p>Replace <code>mysite</code> with the name of the folder that holds your <code>wsgi.py</code>. To create an admin user, point your local copy at the same database (set <code>DATABASE_URL</code> in your terminal) and run <code>python manage.py createsuperuser</code> on your own computer.</p>
+
+<h2 id="deploy">Step 4: Push and deploy</h2>
+<pre><code>git add .
+git commit -m "Production settings"
+git push</code></pre>
+<p>In Shipzo, open <b>New deployment</b>, paste the repository link and press <b>Deploy</b>. The Starter plan is enough for a small site; for bigger projects with many apps, choose Standard. Your project is live at <code>https://your-project.shipzo.tech</code>, and later pushes redeploy it automatically.</p>
+
+<h2 id="tests">Running your tests</h2>
+<p>Shipzo runs <code>pytest</code> before each deploy when it finds files named <code>test_*.py</code> or <code>*_test.py</code>. Django's default <code>tests.py</code> doesn't match that pattern, so rename it (for example to <code>test_views.py</code>), add <code>pytest-django</code> to your requirements and create a <code>pytest.ini</code>:</p>
+<p class="file">pytest.ini</p>
+<pre><code>[pytest]
+DJANGO_SETTINGS_MODULE = mysite.settings</code></pre>
+<p>If a test fails, the release stops and the version that is already live keeps running.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Error</th><th>Fix</th></tr></thead><tbody>
+<tr><td><code>DisallowedHost</code> / Bad Request (400)</td><td>Add <code>.shipzo.tech</code> to <code>ALLOWED_HOSTS</code>.</td></tr>
+<tr><td>CSRF verification failed (403) when submitting a form</td><td>Add <code>https://*.shipzo.tech</code> to <code>CSRF_TRUSTED_ORIGINS</code>.</td></tr>
+<tr><td>Pages load without CSS, admin looks broken</td><td>Add WhiteNoise to <code>MIDDLEWARE</code> and set <code>STATIC_ROOT</code>.</td></tr>
+<tr><td><code>no such table</code> or <code>relation does not exist</code></td><td>Migrations haven't run. Set the start command from Step 3.</td></tr>
+<tr><td>Too many redirects</td><td>Remove <code>SECURE_SSL_REDIRECT = True</code>.</td></tr>
+<tr><td>Data disappears after a redeploy</td><td>You are still on SQLite. Set <code>DATABASE_URL</code> to a hosted database.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Do I need a Procfile or Dockerfile?</summary><p>No. Shipzo detects Django from manage.py and writes the Dockerfile itself. You can see it in the DevOps files tab.</p></details><details><summary>Can I deploy Django REST Framework APIs?</summary><p>Yes. The steps are the same; an API project usually doesn&#x27;t even need WhiteNoise unless it uses the browsable API or the admin.</p></details><details><summary>Can I use MySQL instead of PostgreSQL?</summary><p>Yes, any hosted database that dj-database-url understands works. Add the matching driver to requirements.txt. Free PostgreSQL from Neon or Supabase is the easiest option.</p></details><details><summary>Will my site go to sleep when nobody visits?</summary><p>No. Apps on Shipzo keep running, so the first visitor doesn&#x27;t wait for a cold start.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-flask-app-free"><span>Python · Flask</span><b>How to deploy a Flask app for free</b><p>Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy…</p></a><a class="card" href="/guides/deploy-fastapi-app-free"><span>Python · FastAPI</span><b>How to deploy a FastAPI app for free</b><p>Deploy a FastAPI backend for free with a live HTTPS URL: main.py and requirements.txt, uvicorn, CORS for your front end, and…</p></a><a class="card" href="/guides/deploy-website-from-github"><span>GitHub · Any stack</span><b>How to deploy a website from GitHub for free</b><p>Turn a GitHub repository into a live HTTPS website in minutes. Public or private repos, branches, sub-folders, auto-deploy on…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#how">How Shipzo runs a Django project</a><a href="#settings">Step 1: Production settings</a><a href="#database">Step 2: Use a hosted database</a><a href="#migrations">Step 3: Run migrations on every deploy</a><a href="#deploy">Step 4: Push and deploy</a><a href="#tests">Running your tests</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

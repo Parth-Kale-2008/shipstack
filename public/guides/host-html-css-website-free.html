@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Host an HTML, CSS and JavaScript Website for Free (2026)</title>
+<meta name="description" content="Put an HTML, CSS and JavaScript website or portfolio online free with HTTPS: folder structure, relative paths, clean URLs, ZIP upload and common fixes.">
+<link rel="canonical" href="https://shipzo.tech/guides/host-html-css-website-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Host an HTML, CSS and JavaScript Website for Free (2026)">
+<meta property="og:description" content="Put an HTML, CSS and JavaScript website or portfolio online free with HTTPS: folder structure, relative paths, clean URLs, ZIP upload and common fixes.">
+<meta property="og:url" content="https://shipzo.tech/guides/host-html-css-website-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Host an HTML, CSS and JavaScript Website for Free (2026)", "description": "Put an HTML, CSS and JavaScript website or portfolio online free with HTTPS: folder structure, relative paths, clean URLs, ZIP upload and common fixes.", "url": "https://shipzo.tech/guides/host-html-css-website-free", "datePublished": "2026-11-21", "dateModified": "2026-11-21", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to host an HTML, CSS and JavaScript website for free", "item": "https://shipzo.tech/guides/host-html-css-website-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I need GitHub?", "acceptedAnswer": {"@type": "Answer", "text": "No. You can upload a ZIP of the folder instead. GitHub is only needed if you want automatic redeploys on every push."}}, {"@type": "Question", "name": "Can I use Bootstrap or Tailwind from a CDN?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Links to CDNs work exactly as they do on your computer."}}, {"@type": "Question", "name": "Is this good for a portfolio or resume website?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is one of the most common uses: you get a free HTTPS address you can put on your resume and LinkedIn."}}, {"@type": "Question", "name": "Is it free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, during the beta, with up to 3 projects per account and no card."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / HTML · CSS · JavaScript</div>
+  <div class="layout">
+    <article>
+      <h1>How to host an HTML, CSS and JavaScript website for free</h1>
+      <div class="meta"><span>HTML · CSS · JavaScript</span><span>5 min read</span><span>Updated 21 November 2026</span></div>
+      <p class="lede">A static website, made of HTML, CSS, JavaScript and images with no server code, is the easiest kind of project to host. You don't need to install anything, and you don't even need Git: a ZIP file is enough.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Put <code>index.html</code> in the top folder (or in <code>public/</code>, <code>site/</code> or <code>docs/</code>).</li><li>Use relative paths like <code>images/logo.png</code>, and match capital letters exactly.</li><li>Deploy from GitHub or upload a ZIP of the folder.</li><li>The site is served at <code>https://your-site.shipzo.tech</code> by nginx, with compression and HTTPS.</li></ol></div>
+      
+<h2 id="structure">Step 1: Check the folder structure</h2>
+<pre><code>portfolio/
+├── index.html        ← the home page
+├── about.html
+├── projects.html
+├── css/
+│   └── style.css
+├── js/
+│   └── main.js
+└── images/
+    └── profile.jpg</code></pre>
+<p>Shipzo looks for <code>index.html</code> at the top of the project, or inside <code>public/</code>, <code>site/</code> or <code>docs/</code>. If your main page has a different name, such as <code>calculator.html</code>, that's fine too: Shipzo picks the home page by itself, preferring names like <em>home</em>, <em>main</em> or <em>landing</em> and pages that link to the others, and avoiding pages like <em>login</em> or <em>404</em>. Renaming it to <code>index.html</code> is still the surest option.</p>
+
+<h2 id="paths">Step 2: Fix your paths</h2>
+<ul>
+<li><b>Use relative paths.</b> <code>&lt;img src="images/profile.jpg"&gt;</code> works everywhere. <code>&lt;img src="C:\Users\you\Desktop\profile.jpg"&gt;</code> only works on your laptop.</li>
+<li><b>Match capital letters.</b> Windows treats <code>Profile.JPG</code> and <code>profile.jpg</code> as the same file. Web servers don't.</li>
+<li><b>Avoid spaces in file names.</b> <code>my-project.html</code> is safer than <code>my project.html</code>.</li>
+</ul>
+<p>Pages also get clean addresses: <code>/about</code> serves <code>about.html</code>, so links can use either form.</p>
+
+<h2 id="deploy">Step 3: Deploy it</h2>
+<p><b>Option A, from GitHub.</b> Push the folder to a repository, then paste the link into <b>New deployment</b>. Every later push updates the site. The <a href="/guides/deploy-website-from-github">GitHub deployment guide</a> covers this in detail.</p>
+<p><b>Option B, without Git.</b> Zip the folder so that <code>index.html</code> sits at the top level of the ZIP, open <b>New deployment</b> → <b>Upload ZIP</b> (up to 250&nbsp;MB) and press <b>Deploy</b>. To update the site later, upload a new ZIP from the project's Settings.</p>
+<p>Either way, the site goes live at <code>https://your-site.shipzo.tech</code> within a minute. The free Starter plan is plenty, because a static site uses very little memory.</p>
+
+<h2 id="what-you-get">What you get</h2>
+<ul>
+<li>nginx serving your files, with gzip compression for CSS, JavaScript, JSON and SVG</li>
+<li>An HTTPS certificate issued automatically for your subdomain</li>
+<li>Uptime checks, and a history of your last five versions that you can roll back to</li>
+</ul>
+
+<h2 id="troubleshooting">Common problems and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Fix</th></tr></thead><tbody>
+<tr><td>Page shows but has no styling</td><td>The path in <code>&lt;link href="..."&gt;</code> is wrong or has different capital letters.</td></tr>
+<tr><td>Images are broken</td><td>Check the path and the file name's capital letters, and make sure the image was committed or zipped.</td></tr>
+<tr><td>A contact form does nothing</td><td>A static site can't process form submissions. Use a form service, or add a small backend (see the <a href="/guides/deploy-flask-app-free">Flask</a> or <a href="/guides/deploy-node-express-app-free">Express</a> guides).</td></tr>
+<tr><td>Changes don't show up</td><td>Check that the new deployment finished, then hard-refresh the browser (Ctrl+Shift+R).</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Do I need GitHub?</summary><p>No. You can upload a ZIP of the folder instead. GitHub is only needed if you want automatic redeploys on every push.</p></details><details><summary>Can I use Bootstrap or Tailwind from a CDN?</summary><p>Yes. Links to CDNs work exactly as they do on your computer.</p></details><details><summary>Is this good for a portfolio or resume website?</summary><p>Yes. It is one of the most common uses: you get a free HTTPS address you can put on your resume and LinkedIn.</p></details><details><summary>Is it free?</summary><p>Yes, during the beta, with up to 3 projects per account and no card.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/host-college-project-online"><span>Students · PBL · Viva</span><b>How to host your college project online for free</b><p>Get a free live link for your college project, mini-project or PBL: HTML/CSS/JS sites, Flask, Node and Streamlit apps. Upload to…</p></a><a class="card" href="/guides/deploy-website-from-github"><span>GitHub · Any stack</span><b>How to deploy a website from GitHub for free</b><p>Turn a GitHub repository into a live HTTPS website in minutes. Public or private repos, branches, sub-folders, auto-deploy on…</p></a><a class="card" href="/guides/deploy-react-vite-app"><span>JavaScript · React · Vite</span><b>How to deploy a React (Vite) app with a free HTTPS link</b><p>Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables,…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#structure">Step 1: Check the folder structure</a><a href="#paths">Step 2: Fix your paths</a><a href="#deploy">Step 3: Deploy it</a><a href="#what-you-get">What you get</a><a href="#troubleshooting">Common problems and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

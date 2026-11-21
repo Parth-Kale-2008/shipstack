@@ -406,6 +406,12 @@ const server = http.createServer(async (req, res) => {
     const ok = local && core.APP_DOMAIN && (d === core.APP_DOMAIN || d === 'www.' + core.APP_DOMAIN || (d.endsWith('.' + core.APP_DOMAIN) && core.projects().some((p) => `${p.slug}.${core.APP_DOMAIN}` === d)));
     res.writeHead(ok ? 200 : 404); return res.end();
   }
+  // One address for search engines: www.shipzo.tech/... → shipzo.tech/... (avoids duplicate pages in Google).
+  const reqHost = String(req.headers.host || '').toLowerCase().replace(/:\d+$/, '');
+  if (core.APP_DOMAIN && reqHost === 'www.' + core.APP_DOMAIN) {
+    res.writeHead(301, { Location: `https://${core.APP_DOMAIN}${req.url}` });
+    return res.end();
+  }
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'same-origin');

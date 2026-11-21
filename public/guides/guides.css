@@ -82,3 +82,5 @@ footer a{color:var(--muted);text-decoration:none;margin-left:16px}
 @media (max-width:980px){.layout{grid-template-columns:minmax(0,1fr)}aside.toc{display:none}.nav nav{display:none}}
 @media (max-width:600px){body{font-size:16px}.wrap{padding-inline:16px}.nav .cta .ghost{display:none}footer a{margin:0 16px 0 0}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.hub-h{font:600 22px/1.25 var(--display);margin:36px 0 6px}
+.hub-p{color:var(--muted);font-size:15px;margin:0 0 16px;max-width:720px}

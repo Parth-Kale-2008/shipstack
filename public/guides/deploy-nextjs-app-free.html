@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Deploy a Next.js App for Free with SSR (2026)</title>
+<meta name="description" content="Deploy a Next.js app as a real Node server so SSR, API routes and the App Router keep working. Environment variables, memory and build errors explained.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-nextjs-app-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Deploy a Next.js App for Free with SSR (2026)">
+<meta property="og:description" content="Deploy a Next.js app as a real Node server so SSR, API routes and the App Router keep working. Environment variables, memory and build errors explained.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-nextjs-app-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Deploy a Next.js App for Free with SSR (2026)", "description": "Deploy a Next.js app as a real Node server so SSR, API routes and the App Router keep working. Environment variables, memory and build errors explained.", "url": "https://shipzo.tech/guides/deploy-nextjs-app-free", "datePublished": "2026-11-21", "dateModified": "2026-11-21", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a Next.js app with server-side rendering", "item": "https://shipzo.tech/guides/deploy-nextjs-app-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does the App Router work?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The app runs with next start, so the App Router, server components and route handlers all work."}}, {"@type": "Question", "name": "Do ISR and revalidate work?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, within one running server. The cache starts empty after each deploy, because every release begins with a fresh container."}}, {"@type": "Question", "name": "Can I use a separate backend with Next.js?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Deploy the backend as its own Shipzo project and put its address in a NEXT_PUBLIC_ variable."}}, {"@type": "Question", "name": "Is it free?", "acceptedAnswer": {"@type": "Answer", "text": "Every plan is free during the beta, with up to 3 projects per account."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / JavaScript · Next.js</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a Next.js app with server-side rendering</h1>
+      <div class="meta"><span>JavaScript · Next.js</span><span>6 min read</span><span>Updated 21 November 2026</span></div>
+      <p class="lede">A Next.js app is more than a folder of static files. Server components, route handlers and server-side rendering need a running Node.js process. Shipzo builds your app with <code>next build</code> and runs it with <code>next start</code> inside a container, so whatever works with <code>npm run build &amp;&amp; npm start</code> on your machine works online too.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Check that <code>npm run build</code> succeeds locally.</li><li>Commit your lock file (<code>package-lock.json</code>, <code>yarn.lock</code> or <code>pnpm-lock.yaml</code>).</li><li>Add <code>NEXT_PUBLIC_</code> variables before deploying; keep secrets in variables without that prefix.</li><li>Use the Standard plan or higher, because a Next.js server needs more memory than a static site.</li></ol></div>
+      
+<h2 id="how">How Shipzo runs Next.js</h2>
+<p>When <code>next</code> appears in <code>package.json</code>, Shipzo uses a Node 20 image, installs dependencies with <code>npm ci</code> (falling back to <code>npm install</code>), runs <code>npm run build</code> and starts the server with <code>next start -p $PORT -H 0.0.0.0</code>. There is nothing to configure.</p>
+
+<h2 id="build">Step 1: Make sure it builds</h2>
+<pre><code>npm install
+npm run build
+npm start        # open http://localhost:3000</code></pre>
+<p>If the build fails on your computer, it will fail on the server too. Type errors and lint errors stop <code>next build</code> by default, so fix them first.</p>
+
+<h2 id="env">Step 2: Environment variables</h2>
+<p>Next.js has two kinds of variables, and mixing them up causes most deployment bugs:</p>
+<ul>
+<li><b>Public</b> variables start with <code>NEXT_PUBLIC_</code>. They are copied into the JavaScript sent to browsers when the app is built. Shipzo writes them into the build for you, but changing one only takes effect after a redeploy.</li>
+<li><b>Server-only</b> variables, such as <code>DATABASE_URL</code> or an API key, have no prefix. Read them with <code>process.env</code> in server components and route handlers. They never reach the browser.</li>
+</ul>
+<p>Add both kinds under <b>Settings</b> → <b>Environment variables</b>. Never give a secret the <code>NEXT_PUBLIC_</code> prefix, because anyone can read it in the page source.</p>
+
+<h2 id="plan">Step 3: Pick a plan</h2>
+<p>A Next.js server keeps your pages, its caches and its image optimizer in memory. The free Starter plan (256&nbsp;MB) is tight for that, so choose <b>Standard</b> (512&nbsp;MB) or <b>Pro</b> (1&nbsp;GB). If the dashboard shows the container restarting, it is usually running out of memory. Setting <code>images: { unoptimized: true }</code> in <code>next.config.js</code> also lowers memory use on small plans.</p>
+
+<h2 id="export">What about static export?</h2>
+<p>If your config has <code>output: 'export'</code>, the app is fully static and <code>next start</code> refuses to run it. Either remove that line, so the app runs as a server, or add your own Dockerfile that serves the <code>out/</code> folder with a static web server.</p>
+
+<h2 id="deploy">Step 4: Push and deploy</h2>
+<pre><code>git add .
+git commit -m "Ready to deploy"
+git push</code></pre>
+<p>Open <b>New deployment</b>, paste the repository link, pick a plan and press <b>Deploy</b>. Your app is live at <code>https://your-app.shipzo.tech</code>, and later pushes redeploy it with zero downtime.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Fix</th></tr></thead><tbody>
+<tr><td><code>Type error: ...</code> during the build</td><td>Fix the error locally; the build log shows the file and line.</td></tr>
+<tr><td>Container keeps restarting</td><td>Out of memory. Move to Standard or Pro.</td></tr>
+<tr><td>A <code>NEXT_PUBLIC_</code> value is <code>undefined</code></td><td>Add the variable, then redeploy so it is built in.</td></tr>
+<tr><td><code>"next start" does not work with "output: export"</code></td><td>Remove <code>output: 'export'</code>, or add a Dockerfile for the static files.</td></tr>
+<tr><td>API route returns 404</td><td>Check the file path, for example <code>app/api/hello/route.ts</code>.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Does the App Router work?</summary><p>Yes. The app runs with next start, so the App Router, server components and route handlers all work.</p></details><details><summary>Do ISR and revalidate work?</summary><p>Yes, within one running server. The cache starts empty after each deploy, because every release begins with a fresh container.</p></details><details><summary>Can I use a separate backend with Next.js?</summary><p>Yes. Deploy the backend as its own Shipzo project and put its address in a NEXT_PUBLIC_ variable.</p></details><details><summary>Is it free?</summary><p>Every plan is free during the beta, with up to 3 projects per account.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-react-vite-app"><span>JavaScript · React · Vite</span><b>How to deploy a React (Vite) app with a free HTTPS link</b><p>Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables,…</p></a><a class="card" href="/guides/deploy-mern-stack-app-free"><span>MERN · MongoDB · React · Node</span><b>How to deploy a MERN stack app for free</b><p>Deploy a full MERN project for free: the Express API and React front end as two projects from one repo, MongoDB Atlas,…</p></a><a class="card" href="/guides/deploy-node-express-app-free"><span>JavaScript · Node.js · Express</span><b>How to deploy a Node.js Express app for free</b><p>Deploy a Node.js Express API or website for free: listen on process.env.PORT, set a start script, connect MongoDB Atlas with…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#how">How Shipzo runs Next.js</a><a href="#build">Step 1: Make sure it builds</a><a href="#env">Step 2: Environment variables</a><a href="#plan">Step 3: Pick a plan</a><a href="#export">What about static export?</a><a href="#deploy">Step 4: Push and deploy</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

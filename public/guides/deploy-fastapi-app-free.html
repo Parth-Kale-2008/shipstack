@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Deploy a FastAPI App for Free (uvicorn + HTTPS, 2026)</title>
+<meta name="description" content="Deploy a FastAPI backend for free with a live HTTPS URL: main.py and requirements.txt, uvicorn, CORS for your front end, and secrets in environment variables.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-fastapi-app-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Deploy a FastAPI App for Free (uvicorn + HTTPS, 2026)">
+<meta property="og:description" content="Deploy a FastAPI backend for free with a live HTTPS URL: main.py and requirements.txt, uvicorn, CORS for your front end, and secrets in environment variables.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-fastapi-app-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Deploy a FastAPI App for Free (uvicorn + HTTPS, 2026)", "description": "Deploy a FastAPI backend for free with a live HTTPS URL: main.py and requirements.txt, uvicorn, CORS for your front end, and secrets in environment variables.", "url": "https://shipzo.tech/guides/deploy-fastapi-app-free", "datePublished": "2026-11-21", "dateModified": "2026-11-21", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a FastAPI app for free", "item": "https://shipzo.tech/guides/deploy-fastapi-app-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do the /docs and /redoc pages work after deployment?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. FastAPI serves them from your app, so they are available at your project address."}}, {"@type": "Question", "name": "Can I use WebSockets?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. WebSocket connections are passed through to your app."}}, {"@type": "Question", "name": "Can I run several uvicorn workers?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Set a custom start command such as uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2, and pick a plan with enough memory."}}, {"@type": "Question", "name": "Is it free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, during the beta, with up to 3 projects per account and no card."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / Python · FastAPI</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a FastAPI app for free</h1>
+      <div class="meta"><span>Python · FastAPI</span><span>6 min read</span><span>Updated 21 November 2026</span></div>
+      <p class="lede">FastAPI is quick to write and quick to run. Deploying it mostly comes down to telling the server where your app object lives and which port to use. This is the shortest path from <code>uvicorn main:app --reload</code> to a public API with HTTPS and interactive docs.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Create the app in <code>main.py</code> (or <code>app.py</code>) as <code>app = FastAPI()</code>.</li><li>List <code>fastapi</code> in <code>requirements.txt</code>. Shipzo installs uvicorn and starts it on the right port.</li><li>Allow your front end's address with <code>CORSMiddleware</code>.</li><li>Push to GitHub and deploy. The docs appear at <code>https://your-api.shipzo.tech/docs</code>.</li></ol></div>
+      
+<h2 id="how">How Shipzo starts a FastAPI app</h2>
+<p>When <code>requirements.txt</code> mentions <code>fastapi</code>, Shipzo looks for your code in this order: <code>app.py</code>, <code>main.py</code>, <code>wsgi.py</code>, <code>application.py</code>, <code>server.py</code>, <code>api.py</code>. It finds the variable you assigned <code>FastAPI()</code> to and starts <code>uvicorn main:app --host 0.0.0.0 --port $PORT</code> on Python 3.12. uvicorn is installed for you even if it isn't in your requirements.</p>
+<div class="note">If your app lives inside a package, for example <code>app/main.py</code>, set a custom <b>Start command</b> in Settings: <code>uvicorn app.main:app --host 0.0.0.0 --port $PORT</code>.</div>
+
+<h2 id="code">Step 1: The app</h2>
+<p class="file">main.py</p>
+<pre><code>import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(title="My API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:5173")],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str | None = None):
+    return {"item_id": item_id, "q": q}</code></pre>
+<p class="file">requirements.txt</p>
+<pre><code>fastapi&gt;=0.115
+uvicorn[standard]&gt;=0.30
+httpx&gt;=0.27        # only needed for the tests below</code></pre>
+<p>The root route isn't strictly required. Shipzo's health check accepts any response below 500, so even a 404 at <code>/</code> counts as healthy. Still, a small <code>/</code> route makes the uptime and response-time charts on your dashboard meaningful.</p>
+
+<h2 id="secrets">Step 2: Secrets and databases</h2>
+<p>Read keys and connection strings with <code>os.environ</code>, then add the values in Shipzo under <b>Settings</b> → <b>Environment variables</b>. They are injected at start-up and masked in logs. For data that must survive a redeploy, use a hosted database such as Neon or Supabase (PostgreSQL) or MongoDB Atlas. A SQLite file inside the container is reset on every deploy.</p>
+
+<h2 id="tests">Step 3 (optional): Add a test</h2>
+<p>Any file named <code>test_*.py</code> makes Shipzo run <code>pytest</code> before each deploy, and a failing test stops the release:</p>
+<p class="file">test_main.py</p>
+<pre><code>from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+
+def test_root():
+    assert client.get("/").status_code == 200
+
+def test_item():
+    assert client.get("/items/5?q=hi").json() == {"item_id": 5, "q": "hi"}</code></pre>
+
+<h2 id="deploy">Step 4: Push and deploy</h2>
+<pre><code>git add .
+git commit -m "FastAPI app"
+git push</code></pre>
+<p>Open <b>New deployment</b> in Shipzo, paste the repository link and press <b>Deploy</b>. When it is live, open <code>https://your-api.shipzo.tech/docs</code> for the Swagger UI or <code>/redoc</code> for ReDoc. If a React or Vue front end calls this API, set <code>FRONTEND_URL</code> to that front end's address so CORS lets it through.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Error</th><th>Fix</th></tr></thead><tbody>
+<tr><td><code>Error loading ASGI app</code> / <code>Could not import module</code></td><td>The file or variable name doesn't match. Use <code>main.py</code> with <code>app = FastAPI()</code>, or set the start command.</td></tr>
+<tr><td>Browser shows a CORS error</td><td>Add the exact front-end address, for example <code>https://my-site.shipzo.tech</code>, to <code>allow_origins</code>.</td></tr>
+<tr><td><code>ModuleNotFoundError</code></td><td>Add the missing package to <code>requirements.txt</code> and push again.</td></tr>
+<tr><td>App exits during start-up</td><td>Read the end of the build log. A missing environment variable is the usual cause.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Do the /docs and /redoc pages work after deployment?</summary><p>Yes. FastAPI serves them from your app, so they are available at your project address.</p></details><details><summary>Can I use WebSockets?</summary><p>Yes. WebSocket connections are passed through to your app.</p></details><details><summary>Can I run several uvicorn workers?</summary><p>Yes. Set a custom start command such as uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2, and pick a plan with enough memory.</p></details><details><summary>Is it free?</summary><p>Yes, during the beta, with up to 3 projects per account and no card.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-django-app-free"><span>Python · Django</span><b>How to deploy a Django app for free</b><p>Deploy a Django project online for free with HTTPS: ALLOWED_HOSTS and CSRF settings, static files with WhiteNoise, migrations and…</p></a><a class="card" href="/guides/deploy-flask-app-free"><span>Python · Flask</span><b>How to deploy a Flask app for free</b><p>Deploy a Python Flask app online for free with a live HTTPS link. Prepare app.py and requirements.txt, push to GitHub, and deploy…</p></a><a class="card" href="/guides/deploy-react-vite-app"><span>JavaScript · React · Vite</span><b>How to deploy a React (Vite) app with a free HTTPS link</b><p>Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables,…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#how">How Shipzo starts a FastAPI app</a><a href="#code">Step 1: The app</a><a href="#secrets">Step 2: Secrets and databases</a><a href="#tests">Step 3 (optional): Add a test</a><a href="#deploy">Step 4: Push and deploy</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>

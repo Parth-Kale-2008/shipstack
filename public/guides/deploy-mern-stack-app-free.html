@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How to Deploy a MERN Stack App for Free (2026 Guide)</title>
+<meta name="description" content="Deploy a full MERN project for free: the Express API and React front end as two projects from one repo, MongoDB Atlas, environment variables, CORS and VITE_API_URL.">
+<link rel="canonical" href="https://shipzo.tech/guides/deploy-mern-stack-app-free">
+<meta name="theme-color" content="#0b0d11">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Shipzo">
+<meta property="og:title" content="How to Deploy a MERN Stack App for Free (2026 Guide)">
+<meta property="og:description" content="Deploy a full MERN project for free: the Express API and React front end as two projects from one repo, MongoDB Atlas, environment variables, CORS and VITE_API_URL.">
+<meta property="og:url" content="https://shipzo.tech/guides/deploy-mern-stack-app-free">
+<meta property="og:image" content="https://shipzo.tech/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/guides/guides.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "How to Deploy a MERN Stack App for Free (2026 Guide)", "description": "Deploy a full MERN project for free: the Express API and React front end as two projects from one repo, MongoDB Atlas, environment variables, CORS and VITE_API_URL.", "url": "https://shipzo.tech/guides/deploy-mern-stack-app-free", "datePublished": "2026-11-21", "dateModified": "2026-11-21", "image": "https://shipzo.tech/og.png", "inLanguage": "en", "author": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}, "publisher": {"@type": "Organization", "name": "Shipzo", "url": "https://shipzo.tech"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Shipzo", "item": "https://shipzo.tech/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://shipzo.tech/guides"}, {"@type": "ListItem", "position": 3, "name": "How to deploy a MERN stack app for free", "item": "https://shipzo.tech/guides/deploy-mern-stack-app-free"}]}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I deploy the whole MERN app as one project?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, if Express serves the built React files with express.static. Then there is one project, one address and no CORS setup, but every change rebuilds both halves."}}, {"@type": "Question", "name": "Is MongoDB Atlas free?", "acceptedAnswer": {"@type": "Answer", "text": "Atlas has a free M0 tier with 512 MB of storage, which is plenty for student projects and demos."}}, {"@type": "Question", "name": "Does Socket.io work?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. WebSocket connections are passed through to your app."}}, {"@type": "Question", "name": "Is hosting free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, during the beta, with up to 3 projects per account and no card."}}]}</script>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 20l8-12 8 12h-5v5h-6v-5z" fill="currentColor"/></svg></span>Shipzo</a>
+  <nav aria-label="Site"><a href="/#features">Features</a><a href="/guides" aria-current="page">Guides</a><a href="/#plans">Plans</a><a href="/#faq">FAQ</a></nav>
+  <div class="cta"><a class="btn ghost" href="/login">Log in</a><a class="btn primary" href="/signup">Start free</a></div>
+</div></header>
+<main class="wrap">
+  <div class="crumbs"><a href="/">Shipzo</a> / <a href="/guides">Guides</a> / MERN · MongoDB · React · Node</div>
+  <div class="layout">
+    <article>
+      <h1>How to deploy a MERN stack app for free</h1>
+      <div class="meta"><span>MERN · MongoDB · React · Node</span><span>9 min read</span><span>Updated 21 November 2026</span></div>
+      <p class="lede">Most MERN projects are really two apps in one repository: an Express API and a React front end. The easiest way to deploy them is as two separate deployments that talk to each other over HTTPS, with the database on MongoDB Atlas.</p>
+      <div class="tldr"><b>Quick answer</b><ol><li>Keep the API and the front end in separate folders, for example <code>backend/</code> and <code>frontend/</code>.</li><li>Create a free MongoDB Atlas cluster and put its connection string in <code>MONGODB_URI</code>.</li><li>Deploy <code>backend/</code> first, then <code>frontend/</code> with <code>VITE_API_URL</code> set to the backend address.</li><li>Allow the front-end address in the backend's CORS settings.</li></ol></div>
+      
+<h2 id="structure">The project layout</h2>
+<pre><code>my-mern-app/
+├── backend/
+│   ├── package.json
+│   ├── server.js
+│   └── routes/
+└── frontend/
+    ├── package.json
+    ├── vite.config.js
+    └── src/</code></pre>
+<p>Both folders live in one GitHub repository. You will create two Shipzo projects from it, each pointing at its own folder.</p>
+
+<h2 id="atlas">Step 1: Set up the database on MongoDB Atlas</h2>
+<ol>
+<li>Create a free cluster on MongoDB Atlas.</li>
+<li>Under <b>Database Access</b>, add a user with a password.</li>
+<li>Under <b>Network Access</b>, allow access from anywhere (<code>0.0.0.0/0</code>) or from the server's IP address. If you skip this, the connection times out.</li>
+<li>Click <b>Connect</b> → <b>Drivers</b> and copy the connection string. It starts with <code>mongodb+srv://</code>.</li>
+</ol>
+<p><code>mongodb://localhost:27017</code> only works on your own computer, so the deployed app must use the Atlas string.</p>
+
+<h2 id="backend">Step 2: Prepare the backend</h2>
+<p class="file">backend/server.js</p>
+<pre><code>const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+
+const app = express();
+app.use(express.json());
+app.use(cors({ origin: process.env.FRONTEND_URL }));
+
+app.get('/', (req, res) =&gt; res.json({ status: 'ok' }));
+app.use('/api/notes', require('./routes/notes'));
+
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() =&gt; console.log('MongoDB connected'))
+  .catch((err) =&gt; { console.error(err); process.exit(1); });
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () =&gt; console.log(`API on ${PORT}`));</code></pre>
+<p>In <code>backend/package.json</code>, make sure <code>"start": "node server.js"</code> is set (not nodemon), and that <code>express</code>, <code>mongoose</code> and <code>cors</code> are in <code>dependencies</code>.</p>
+
+<h2 id="frontend">Step 3: Prepare the front end</h2>
+<p>Never hard-code <code>http://localhost:5000</code> in your React code. Read the API address from a build-time variable instead:</p>
+<p class="file">frontend/src/api.js</p>
+<pre><code>const API = import.meta.env.VITE_API_URL;
+
+export async function getNotes() {
+  const res = await fetch(`${API}/api/notes`);
+  return res.json();
+}</code></pre>
+<p>For local development, put <code>VITE_API_URL=http://localhost:5000</code> in <code>frontend/.env</code> (and keep <code>.env</code> out of Git). If you used Create React App instead of Vite, the variable is <code>REACT_APP_API_URL</code> and you read it with <code>process.env.REACT_APP_API_URL</code>.</p>
+
+<h2 id="deploy">Step 4: Deploy two projects</h2>
+<p><b>Project 1, the API.</b> Open <b>New deployment</b>, paste the repository link, set <b>Root directory</b> to <code>backend/</code> and name the project, for example <code>notes-api</code>. Add two environment variables:</p>
+<pre><code>MONGODB_URI=mongodb+srv://user:password@cluster0.xxxxx.mongodb.net/notes
+FRONTEND_URL=https://notes.shipzo.tech</code></pre>
+<p>Deploy. The API is now at <code>https://notes-api.shipzo.tech</code>.</p>
+<p><b>Project 2, the front end.</b> Create another deployment from the same repository with <b>Root directory</b> set to <code>frontend/</code>, name it <code>notes</code>, and add:</p>
+<pre><code>VITE_API_URL=https://notes-api.shipzo.tech</code></pre>
+<p>Deploy. The site is at <code>https://notes.shipzo.tech</code>. Refreshing deep links such as <code>/notes/42</code> works without extra configuration, because Shipzo serves <code>index.html</code> for client-side routes.</p>
+<p>From now on, a <code>git push</code> redeploys both projects. The beta allows three projects per account, so a MERN app uses two of them.</p>
+
+<h2 id="troubleshooting">Common errors and fixes</h2>
+<div class="tbl"><table><thead><tr><th>Problem</th><th>Fix</th></tr></thead><tbody>
+<tr><td>CORS error in the browser console</td><td><code>FRONTEND_URL</code> must exactly match the front-end address, with <code>https://</code> and no trailing slash.</td></tr>
+<tr><td>Front end still calls <code>localhost</code></td><td><code>VITE_API_URL</code> is built in. Set it in the front-end project, then redeploy that project.</td></tr>
+<tr><td><code>MongooseServerSelectionError</code></td><td>Atlas is blocking the connection. Check <b>Network Access</b>.</td></tr>
+<tr><td>Mixed content blocked</td><td>The API address must start with <code>https://</code>.</td></tr>
+<tr><td>Health check timed out on the API</td><td>Use <code>process.env.PORT</code> instead of a fixed port.</td></tr>
+</tbody></table></div>
+
+      <div class="cta-box"><h2>Deploy it in one click</h2><p>Paste your GitHub repo into Shipzo. Tests, Docker build, HTTPS and monitoring are handled for you. Free during the beta, no card needed.</p><a class="btn primary" href="/signup">Create a free account</a></div>
+      <h2 id="faq">Frequently asked questions</h2>
+      <div class="faq"><details><summary>Can I deploy the whole MERN app as one project?</summary><p>Yes, if Express serves the built React files with express.static. Then there is one project, one address and no CORS setup, but every change rebuilds both halves.</p></details><details><summary>Is MongoDB Atlas free?</summary><p>Atlas has a free M0 tier with 512 MB of storage, which is plenty for student projects and demos.</p></details><details><summary>Does Socket.io work?</summary><p>Yes. WebSocket connections are passed through to your app.</p></details><details><summary>Is hosting free?</summary><p>Yes, during the beta, with up to 3 projects per account and no card.</p></details></div>
+      <div class="related"><h2>Related guides</h2><div class="cards"><a class="card" href="/guides/deploy-node-express-app-free"><span>JavaScript · Node.js · Express</span><b>How to deploy a Node.js Express app for free</b><p>Deploy a Node.js Express API or website for free: listen on process.env.PORT, set a start script, connect MongoDB Atlas with…</p></a><a class="card" href="/guides/deploy-react-vite-app"><span>JavaScript · React · Vite</span><b>How to deploy a React (Vite) app with a free HTTPS link</b><p>Deploy a React app built with Vite: build to static files, fix blank pages and 404s on refresh, use VITE_ environment variables,…</p></a><a class="card" href="/guides/deploy-nextjs-app-free"><span>JavaScript · Next.js</span><b>How to deploy a Next.js app with server-side rendering</b><p>Deploy a Next.js app as a real Node server so SSR, API routes and the App Router keep working. Environment variables, memory and…</p></a></div></div>
+    </article>
+    <aside class="toc" aria-label="On this page"><b>On this page</b><a href="#structure">The project layout</a><a href="#atlas">Step 1: Set up the database on MongoDB Atlas</a><a href="#backend">Step 2: Prepare the backend</a><a href="#frontend">Step 3: Prepare the front end</a><a href="#deploy">Step 4: Deploy two projects</a><a href="#troubleshooting">Common errors and fixes</a><a href="#faq">FAQ</a></aside>
+  </div>
+</main>
+<footer><div class="wrap"><span>© 2026 Shipzo · ShipStack deployment platform</span><span><a href="/guides">Guides</a><a href="/legal">Terms &amp; Privacy</a><a href="/signup">Start free</a></span></div></footer>
+</body>
+</html>
